@@ -1,0 +1,23 @@
+Code Review
+
+The code is well-structured, with clear separation of concerns (models, routes, middleware, tests) and includes essential features like JWT authentication, MongoDB integration, and Swagger documentation. Below is a detailed analysis of each component, followed by recommendations to ensure the API works as expected on Heroku.
+
+Project Structure
+The structure is organized as follows:
+
+
+    1.index.js: Main entry point, sets up Express, MongoDB, routes, and Swagger.
+    2.models/Item.js: Mongoose schema for collection items (name, description, category, value, userId).
+    3.models/User.js: Mongoose schema for users (username, password).
+    4.routes/users.js: Handles user registration and login with JWT and bcrypt.
+    5.routes/items.js: CRUD operations for items, protected by JWT authentication.
+    6.middleware/auth.js: JWT verification middleware.
+    7.tests/items.test.js: Jest/Supertest tests for item endpoints.
+    8.swagger.yaml: OpenAPI 3.0 documentation for the API.
+    9..env: Environment variables (PORT, MONGODB_URI, JWT_SECRET).
+    10.jest.config.js: Jest configuration for testing.
+
+Observations:
+
+    -> The structure follows best practices for a Node.js REST API.
+    -> The .env file is correctly excluded from version control (.gitignore).

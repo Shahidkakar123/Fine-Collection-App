@@ -1,0 +1,27 @@
+{
+  "name": "fine-collection-app",
+  "version": "1.0.0",
+  "description": "A full-stack REST API and frontend for managing employee fines, built with Node.js, Express, MongoDB, and Vue 3.",
+  "main": "index.js",
+  "scripts": {
+    "install": "cd backend && npm install && cd ../frontend && npm install",
+    "build": "cd frontend && npm run build",
+    "start": "cd backend && npm start",
+    "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm run dev\"",
+    "postinstall": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Shahidkakar123/Fine-Collection-App.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Shahidkakar123/Fine-Collection-App/issues"
+  },
+  "homepage": "https://github.com/Shahidkakar123/Fine-Collection-App#readme",
+  "dependencies": {
+    "concurrently": "^9.2.0"
+  }
+}
