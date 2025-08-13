@@ -21,7 +21,7 @@
     }
   ],
   "env": {
-    "MONGODB_URI": "@mongodb+srv://shahidkhan32333435:LAdZxthFC4fo5rQP@cluster0.jtjxzeq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
+    "MONGODB_URI": "@mongodb_uri",
     "JWT_SECRET": "@jwt_secret"
   }
 }
