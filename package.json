@@ -23,5 +23,8 @@
   "homepage": "https://github.com/Shahidkakar123/Fine-Collection-App#readme",
   "dependencies": {
     "concurrently": "^9.2.0"
+  },
+  "engines": {
+    "node": ">=18.x"
   }
 }

@@ -21,7 +21,14 @@
     }
   ],
   "env": {
-    "MONGODB_URI": "@MONGODB_URI",
-    "JWT_SECRET": "@JWT_SECRET"
+    "MONGODB_URI": "MONGODB_URI",
+    "JWT_SECRET": "JWT_SECRET"
+  },
+
+  "build": {
+    "env": {
+      "NODE_VERSION": "22"
+    }
   }
+  
 }
