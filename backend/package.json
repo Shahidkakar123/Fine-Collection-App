@@ -13,10 +13,11 @@
   "dependencies": {
     "bcrypt": "^6.0.0",
     "dotenv": "^16.6.1",
-    "express": "4.17.1",
+    "express": "^4.17.1",
     "js-yaml": "^4.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.16.3",
+    "serverless-http": "^3.2.0",
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {

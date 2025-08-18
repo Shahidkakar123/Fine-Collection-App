@@ -1,4 +1,5 @@
 const express = require("express");
+const serverless = require("serverless-http");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const userRoutes = require("./routes/users");
@@ -30,3 +31,4 @@ app.use("/api/items", itemRoutes);
 app.listen(process.env.PORT || 3000, () => console.log(`Server running on port ${process.env.PORT || 3000}`));
 
 module.exports = app;
+module.exports.handler = serverless(app);
