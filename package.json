@@ -4,7 +4,9 @@
   "description": "A full-stack REST API and frontend for managing employee fines, built with Node.js, Express, MongoDB, and Vue 3.",
   "main": "index.js",
   "scripts": {
-    "install": "cd backend && npm install && cd ../frontend && npm install",
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd frontend && npm install",
+    "install": "npm install && npm run install:backend && npm run install:frontend",
     "build": "cd frontend && npm run build",
     "start": "cd backend && npm start",
     "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm run dev\"",
