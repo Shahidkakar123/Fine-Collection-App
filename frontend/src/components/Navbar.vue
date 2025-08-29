@@ -67,6 +67,7 @@ const router = useRouter();
 const isDropdownOpen = ref(false);
 
 // Debug: Log role to verify
+debugger
 console.log('Navbar role:', authStore.role);
 
 const toggleDropdown = () => {
