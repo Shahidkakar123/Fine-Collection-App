@@ -16,15 +16,14 @@
       "dest": "backend/index.js"
     },
     {
-      "src": "/static/(.*)",
-      "dest": "/frontend/dist/index.html"
+      "src": "/(.*)",
+      "dest": "frontend/dist/index.html"
     }
   ],
   "env": {
     "MONGODB_URI": "@MONGODB_URI",
     "JWT_SECRET": "@JWT_SECRET"
   },
-
   "build": {
     "env": {
       "NODE_VERSION": "18"
