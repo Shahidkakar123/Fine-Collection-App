@@ -2,7 +2,7 @@
   "name": "fine-collection-app",
   "version": "1.0.0",
   "private": true,
-  "description": "Monorepo for Fine Collection App \u2014 root package.json adjusted for Vercel",
+  "description": "Monorepo for Fine Collection App — root package.json adjusted for Vercel",
   "scripts": {
     "build": "cd frontend && npm run build",
     "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm run dev\""
@@ -19,6 +19,6 @@
     "concurrently": "^9.2.0"
   },
   "engines": {
-    "node": "18.x"
+    "node": "22.x"
   }
 }
