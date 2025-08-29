@@ -1,11 +1,11 @@
 {
   "name": "fine-collection-app",
   "version": "1.0.0",
-  "description": "A full-stack REST API and frontend for managing employee fines, built with Node.js, Express, MongoDB, and Vue 3.",
-  "main": "index.js",
+  "private": true,
+  "description": "Monorepo for Fine Collection App \u2014 root package.json adjusted for Vercel",
   "scripts": {
-    "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm run dev\"",
-    "build": "cd frontend && npm run build"
+    "build": "cd frontend && npm run build",
+    "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm run dev\""
   },
   "repository": {
     "type": "git",
@@ -14,14 +14,11 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/Shahidkakar123/Fine-Collection-App/issues"
-  },
-  "homepage": "https://github.com/Shahidkakar123/Fine-Collection-App#readme",
-  "dependencies": {
+  "dependencies": {},
+  "devDependencies": {
     "concurrently": "^9.2.0"
   },
   "engines": {
-    "node": ">=18.x"
+    "node": "18.x"
   }
 }
