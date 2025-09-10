@@ -4,7 +4,6 @@
   "private": true,
   "description": "Monorepo for Fine Collection App — root package.json adjusted for Vercel",
   "scripts": {
-    "build": "cd frontend && npm install && npm run build",
     "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm run dev\""
   },
   "repository": {
