@@ -43,6 +43,17 @@
         />
       </div>
       <div class="mb-4">
+        <label class="block text-gray-800 font-medium mb-1">Date</label>
+        <input
+          v-model="form.date"
+          type="date"
+          disabled
+          class="w-full border border-gray-300 rounded-lg p-2 bg-gray-50 text-gray-700 cursor-not-allowed transition duration-200"
+          required
+        />
+        <p class="text-xs text-gray-500 mt-1">Auto-filled with today's date</p>
+      </div>
+      <div class="mb-4">
         <label class="block text-gray-800 font-medium mb-1">Status</label>
         <select
           v-model="form.status"
@@ -69,11 +80,18 @@ import { ref } from 'vue';
 const props = defineProps(['fine']);
 const emit = defineEmits(['submit']);
 
+// Get today's date in YYYY-MM-DD format
+const getTodayDate = () => {
+  const today = new Date();
+  return today.toISOString().split('T')[0];
+};
+
 const form = ref({
   name: props.fine?.name || '',
   description: props.fine?.description || '',
   category: props.fine?.category || 'Attendance',
   value: props.fine?.value || 0,
+  date: props.fine?.date || getTodayDate(),
   status: props.fine?.status || 'pending',
 });
 

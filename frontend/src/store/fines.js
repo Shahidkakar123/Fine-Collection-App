@@ -2,6 +2,8 @@ import { defineStore } from 'pinia';
 import axios from 'axios';
 import { useAuthStore } from './auth'; // Import auth store for token access
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 export const useFinesStore = defineStore('fines', {
   state: () => ({
     fines: [],
@@ -41,7 +43,7 @@ export const useFinesStore = defineStore('fines', {
       this.error = null;
       try {
         const authStore = useAuthStore();
-        const response = await axios.get('/api/items', {
+        const response = await axios.get(`${API_BASE_URL}/api/items`, {
           headers: { Authorization: `Bearer ${authStore.token}` },
         });
         this.fines = response.data;
@@ -55,12 +57,11 @@ export const useFinesStore = defineStore('fines', {
     },
 
     async createFine(fine) {
-      debugger
       this.loading = true;
       this.error = null;
       try {
         const authStore = useAuthStore();
-        const response = await axios.post('/api/items', fine, {
+        const response = await axios.post(`${API_BASE_URL}/api/items`, fine, {
           headers: { Authorization: `Bearer ${authStore.token}` },
         });
         this.fines.push(response.data);
@@ -68,6 +69,7 @@ export const useFinesStore = defineStore('fines', {
       } catch (err) {
         this.error = err.message || 'Failed to create fine';
         console.error('Error creating fine:', err);
+        throw err; // Re-throw so caller can handle
       } finally {
         this.loading = false;
       }
@@ -78,7 +80,7 @@ export const useFinesStore = defineStore('fines', {
       this.error = null;
       try {
         const authStore = useAuthStore();
-        const response = await axios.put(`/api/items/${id}`, fine, {
+        const response = await axios.put(`${API_BASE_URL}/api/items/${id}`, fine, {
           headers: { Authorization: `Bearer ${authStore.token}` },
         });
         const index = this.fines.findIndex(f => f._id === id);
@@ -97,7 +99,7 @@ export const useFinesStore = defineStore('fines', {
       this.error = null;
       try {
         const authStore = useAuthStore();
-        await axios.delete(`/api/items/${id}`, {
+        await axios.delete(`${API_BASE_URL}/api/items/${id}`, {
           headers: { Authorization: `Bearer ${authStore.token}` },
         });
         this.fines = this.fines.filter(f => f._id !== id);

@@ -16,7 +16,10 @@ const auth = (req, res, next) => {
 
 const checkRole = (role) => (req, res, next) => {
   if (req.user.role !== role) {
-    return res.status(403).json({ message: 'Forbidden' });
+    console.error(`[AUTH] Role check failed: user has role '${req.user.role}', but '${role}' is required`);
+    return res.status(403).json({ 
+      message: `You must have '${role}' role to perform this action. Your current role is '${req.user.role}'. Please log out and log back in if you were recently promoted.` 
+    });
   }
   next();
 };

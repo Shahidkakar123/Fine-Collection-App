@@ -1,7 +1,8 @@
 <template>
-  <div class="min-h-screen bg-gray-900 text-white transition-all duration-300">
+  <div class="min-h-screen bg-gray-100 text-gray-900 transition-all duration-300">
+    <NotificationCenter />
     <Navbar />
-    <main class="container mx-auto p-6">
+    <main>
       <router-view />
     </main>
   </div>
@@ -9,8 +10,9 @@
 
 <script>
 import Navbar from './components/Navbar.vue';
+import NotificationCenter from './components/NotificationCenter.vue';
 
 export default {
-  components: { Navbar },
+  components: { Navbar, NotificationCenter },
 };
 </script>

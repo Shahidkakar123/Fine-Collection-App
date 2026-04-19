@@ -6,7 +6,8 @@ const itemSchema = new mongoose.Schema({
   description: String,
   category: { type: String, required: true },
   value: { type: Number, required: true },
+  date: { type: Date, default: Date.now }, // Date of fine
   status: { type: String, enum: ['paid', 'pending'], default: 'pending' },
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('Item', itemSchema);
