@@ -123,7 +123,7 @@ A new fine has been assigned to you by Project Director.
 Please log in to your dashboard to view more details.
 
 Best regards,
-Fine Collection System
+FineMate
 ```
 
 ## 🔄 Next Steps

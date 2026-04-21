@@ -82,7 +82,7 @@ router.post('/', [auth, checkRole('pd')], async (req, res) => {
               <p><strong>Status:</strong> ${item.status}</p>
             </div>
             <p>Please log in to your dashboard to view more details.</p>
-            <p>Best regards,<br>Fine Collection System</p>
+            <p>Best regards,<br>FineMate</p>
           `;
           await sendEmail(employee.email, subject, message);
         }

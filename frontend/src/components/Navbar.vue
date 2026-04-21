@@ -4,7 +4,7 @@
       <div class="flex justify-between items-center">
         <!-- Logo/Brand -->
         <router-link to="/" class="flex items-center">
-          <h1 class="text-2xl font-bold text-primary">-------</h1>
+          <h1 class="text-2xl font-bold text-primary">FineMate</h1>
         </router-link>
 
         <!-- Navigation Links -->

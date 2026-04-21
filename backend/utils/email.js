@@ -67,14 +67,14 @@ const sendEmail = async (to, subject, htmlContent) => {
           <body>
             <div class="container">
               <div class="header">
-                <h1>⚠️ Fine Collection System</h1>
+                <h1>⚠️ FineMate </h1>
               </div>
               <div class="content">
                 ${htmlContent}
               </div>
               <div class="footer">
                 <p>This is an automated message. Please do not reply to this email.</p>
-                <p>&copy; 2026 Fine Collection System. All rights reserved.</p>
+                <p>&copy; 2026 FineMate. All rights reserved.</p>
               </div>
             </div>
           </body>

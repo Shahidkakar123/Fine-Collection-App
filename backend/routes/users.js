@@ -289,7 +289,7 @@ router.post("/forgot-password", async (req, res) => {
     // Send reset email
     const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
     
-    const emailSubject = 'Password Reset Request - Fine Collection System';
+    const emailSubject = 'Password Reset Request - FineMate';
     const emailBody = `
       <h2>Password Reset Request</h2>
       <p>Hello ${user.username},</p>
@@ -297,7 +297,7 @@ router.post("/forgot-password", async (req, res) => {
       <p><a href="${resetLink}" style="background-color: #0066cc; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">Reset Password</a></p>
       <p>This link will expire in 15 minutes.</p>
       <p>If you didn't request this, please ignore this email.</p>
-      <p>Best regards,<br>Fine Collection System</p>
+      <p>Best regards,<br>FineMate</p>
     `;
     
     await sendEmail(user.email, emailSubject, emailBody);
@@ -343,14 +343,14 @@ router.post("/reset-password", async (req, res) => {
     await user.save();
 
     // Send confirmation email
-    const emailSubject = 'Password Reset Successful - Fine Collection System';
+    const emailSubject = 'Password Reset Successful - FineMate';
     const emailBody = `
       <h2>Password Reset Successful</h2>
       <p>Hello ${user.username},</p>
       <p>Your password has been successfully reset.</p>
       <p>You can now login with your new password.</p>
       <p>If you didn't make this change, please contact support immediately.</p>
-      <p>Best regards,<br>Fine Collection System</p>
+      <p>Best regards,<br>FineMate</p>
     `;
     
     await sendEmail(user.email, emailSubject, emailBody);
@@ -388,13 +388,13 @@ router.delete("/:id", [auth, checkRole("pd")], async (req, res) => {
     await user.save();
 
     // Send notification email to employee
-    const emailSubject = 'Account Deactivation Notice - Fine Collection System';
+    const emailSubject = 'Account Deactivation Notice - FineMate';
     const emailBody = `
       <h2>Account Deactivation</h2>
       <p>Hello ${username},</p>
-      <p>Your account in the Fine Collection System has been deactivated as you are no longer registered as an employee.</p>
+      <p>Your account in the FineMate has been deactivated as you are no longer registered as an employee.</p>
       <p>If you believe this is an error, please contact your administrator.</p>
-      <p>Best regards,<br>Fine Collection System</p>
+      <p>Best regards,<br>FineMate</p>
     `;
     
     try {
@@ -432,14 +432,14 @@ router.put("/reactivate/:id", [auth, checkRole("pd")], async (req, res) => {
     await user.save();
 
     // Send notification email to employee
-    const emailSubject = 'Account Reactivation Notice - Fine Collection System';
+    const emailSubject = 'Account Reactivation Notice - FineMate';
     const emailBody = `
       <h2>Account Reactivation</h2>
       <p>Hello ${username},</p>
-      <p>Your account in the Fine Collection System has been reactivated.</p>
+      <p>Your account in the FineMate has been reactivated.</p>
       <p>You can now login with your credentials.</p>
       <p>If you have any questions, please contact your administrator.</p>
-      <p>Best regards,<br>Fine Collection System</p>
+      <p>Best regards,<br>FineMate</p>
     `;
     
     try {
