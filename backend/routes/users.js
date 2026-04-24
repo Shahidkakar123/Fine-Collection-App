@@ -1,18 +1,17 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { auth, checkRole } = require("../middleware/auth");
 const { sendEmail } = require("../utils/email");
 
-require("dotenv").config({ path: require('path').join(__dirname, '../.env') });
+require("dotenv").config({ path: require("path").join(__dirname, "../.env") });
 // REGISTER - Create new employee account
-router.post("/register", 
-  async (req, res) => {
+router.post("/register", async (req, res) => {
   const { username, email, password, phone } = req.body;
-  
+
   if (!username || !email || !password) {
     return res.status(400).json({ message: "Username, email, and password are required" });
   }
@@ -21,7 +20,7 @@ router.post("/register",
     return res.status(400).json({ message: "Username must be at least 3 characters" });
   }
 
-  if (!email.includes('@')) {
+  if (!email.includes("@")) {
     return res.status(400).json({ message: "Please provide a valid email address" });
   }
 
@@ -39,19 +38,19 @@ router.post("/register",
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ 
-      username, 
+    const user = new User({
+      username,
       email,
       phone, // Optional phone for future SMS service
-      password: hashedPassword, 
+      password: hashedPassword,
       role: "employee",
-      isActive: true  // Explicitly set new users as active
+      isActive: true, // Explicitly set new users as active
     });
-    
+
     await user.save();
-    res.status(201).json({ 
+    res.status(201).json({
       message: "✓ User registered successfully as employee",
-      userId: user._id
+      userId: user._id,
     });
   } catch (err) {
     res.status(500).json({ message: "Error registering user: " + err.message });
@@ -61,7 +60,7 @@ router.post("/register",
 // LOGIN - Authenticate user and return JWT
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
-  
+
   if (!username || !password) {
     return res.status(400).json({ message: "Username and password are required" });
   }
@@ -82,19 +81,15 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role }, 
-      process.env.JWT_SECRET, 
-      { expiresIn: "8h" }
-    );
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "8h" });
 
-    res.json({ 
+    res.json({
       token,
       user: {
         id: user._id,
         username: user.username,
-        role: user.role
-      }
+        role: user.role,
+      },
     });
   } catch (err) {
     res.status(500).json({ message: "Error logging in: " + err.message });
@@ -115,19 +110,15 @@ router.post("/refresh-token", auth, async (req, res) => {
     }
 
     // Create a new token with the current role from the database
-    const newToken = jwt.sign(
-      { id: user._id, role: user.role }, 
-      process.env.JWT_SECRET, 
-      { expiresIn: "8h" }
-    );
+    const newToken = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "8h" });
 
-    res.json({ 
+    res.json({
       token: newToken,
       user: {
         id: user._id,
         username: user.username,
-        role: user.role
-      }
+        role: user.role,
+      },
     });
   } catch (err) {
     res.status(500).json({ message: "Error refreshing token: " + err.message });
@@ -147,17 +138,17 @@ router.get("/", [auth, checkRole("pd")], async (req, res) => {
 // GET user by username - PD only
 router.get("/search/:username", [auth, checkRole("pd")], async (req, res) => {
   const { username } = req.params;
-  
+
   try {
     const user = await User.findOne({ username });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    
-    res.json({ 
+
+    res.json({
       id: user._id,
       username: user.username,
-      role: user.role
+      role: user.role,
     });
   } catch (err) {
     res.status(500).json({ message: "Error searching user: " + err.message });
@@ -167,21 +158,21 @@ router.get("/search/:username", [auth, checkRole("pd")], async (req, res) => {
 // PROMOTE USER - PD only, promote employee to PD
 router.put("/promote/:username", [auth, checkRole("pd")], async (req, res) => {
   const { username } = req.params;
-  
+
   // Validate input
-  if (!username || typeof username !== 'string') {
+  if (!username || typeof username !== "string") {
     return res.status(400).json({ message: "Username is required and must be a valid string" });
   }
 
   if (username.trim().length === 0) {
     return res.status(400).json({ message: "Username cannot be empty" });
   }
-  
+
   try {
     const user = await User.findOne({ username: username.trim() });
     if (!user) {
-      return res.status(404).json({ 
-        message: `User "${username}" does not exist in the system. Please check the username and try again.` 
+      return res.status(404).json({
+        message: `User "${username}" does not exist in the system. Please check the username and try again.`,
       });
     }
 
@@ -191,17 +182,17 @@ router.put("/promote/:username", [auth, checkRole("pd")], async (req, res) => {
 
     user.role = "pd";
     await user.save();
-    
-    res.json({ 
+
+    res.json({
       message: `✓ User "${username}" has been successfully promoted to Project Director`,
       user: {
         id: user._id,
         username: user.username,
-        role: user.role
-      }
+        role: user.role,
+      },
     });
   } catch (err) {
-    console.error('Error in promote user endpoint:', err);
+    console.error("Error in promote user endpoint:", err);
     res.status(500).json({ message: "Failed to promote user. Please try again later." });
   }
 });
@@ -209,53 +200,53 @@ router.put("/promote/:username", [auth, checkRole("pd")], async (req, res) => {
 // DEMOTE USER - PD only, demote PD back to employee
 router.put("/demote/:username", [auth, checkRole("pd")], async (req, res) => {
   const { username } = req.params;
-  
-  console.log('[DEMOTE] Attempting to demote user:', username);
-  console.log('[DEMOTE] Requester role:', req.user.role);
-  
+
+  console.log("[DEMOTE] Attempting to demote user:", username);
+  console.log("[DEMOTE] Requester role:", req.user.role);
+
   // Validate input
-  if (!username || typeof username !== 'string') {
-    console.log('[DEMOTE] Invalid username format');
+  if (!username || typeof username !== "string") {
+    console.log("[DEMOTE] Invalid username format");
     return res.status(400).json({ message: "Username is required and must be a valid string" });
   }
 
   if (username.trim().length === 0) {
-    console.log('[DEMOTE] Username is empty');
+    console.log("[DEMOTE] Username is empty");
     return res.status(400).json({ message: "Username cannot be empty" });
   }
-  
+
   try {
-    console.log('[DEMOTE] Searching for user:', username.trim());
+    console.log("[DEMOTE] Searching for user:", username.trim());
     const user = await User.findOne({ username: username.trim() });
-    
+
     if (!user) {
-      console.log('[DEMOTE] User not found:', username);
-      return res.status(404).json({ 
-        message: `User "${username}" does not exist in the system. Please check the username and try again.` 
+      console.log("[DEMOTE] User not found:", username);
+      return res.status(404).json({
+        message: `User "${username}" does not exist in the system. Please check the username and try again.`,
       });
     }
 
-    console.log('[DEMOTE] User found. Current role:', user.role);
-    
+    console.log("[DEMOTE] User found. Current role:", user.role);
+
     if (user.role === "employee") {
-      console.log('[DEMOTE] User is already employee');
+      console.log("[DEMOTE] User is already employee");
       return res.status(400).json({ message: `User "${username}" is already an employee` });
     }
 
     user.role = "employee";
     await user.save();
-    
-    console.log('[DEMOTE] Successfully demoted user to employee');
-    res.json({ 
+
+    console.log("[DEMOTE] Successfully demoted user to employee");
+    res.json({
       message: `✓ User "${username}" has been successfully demoted to Employee`,
       user: {
         id: user._id,
         username: user.username,
-        role: user.role
-      }
+        role: user.role,
+      },
     });
   } catch (err) {
-    console.error('[DEMOTE] Error in demote user endpoint:', err);
+    console.error("[DEMOTE] Error in demote user endpoint:", err);
     res.status(500).json({ message: "Failed to demote user. Please try again later." });
   }
 });
@@ -263,7 +254,7 @@ router.put("/demote/:username", [auth, checkRole("pd")], async (req, res) => {
 // FORGOT PASSWORD - Generate reset token and send email
 router.post("/forgot-password", async (req, res) => {
   const { email } = req.body;
-  
+
   if (!email) {
     return res.status(400).json({ message: "Email is required" });
   }
@@ -276,20 +267,20 @@ router.post("/forgot-password", async (req, res) => {
     }
 
     // Generate reset token
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
-    
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetTokenHash = crypto.createHash("sha256").update(resetToken).digest("hex");
+
     // Set token expiry to 15 minutes from now
-    const expiryTime = Date.now() + (15 * 60 * 1000);
-    
+    const expiryTime = Date.now() + 15 * 60 * 1000;
+
     user.resetPasswordToken = resetTokenHash;
     user.resetPasswordExpiry = expiryTime;
     await user.save();
 
     // Send reset email
-    const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
-    
-    const emailSubject = 'Password Reset Request - FineMate';
+    const resetLink = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password/${resetToken}`;
+
+    const emailSubject = "Password Reset Request - FineMate";
     const emailBody = `
       <h2>Password Reset Request</h2>
       <p>Hello ${user.username},</p>
@@ -299,9 +290,9 @@ router.post("/forgot-password", async (req, res) => {
       <p>If you didn't request this, please ignore this email.</p>
       <p>Best regards,<br>FineMate</p>
     `;
-    
+
     await sendEmail(user.email, emailSubject, emailBody);
-    
+
     res.json({ message: "✓ If email exists, a reset link has been sent" });
   } catch (err) {
     res.status(500).json({ message: "Error processing forgot password: " + err.message });
@@ -311,7 +302,7 @@ router.post("/forgot-password", async (req, res) => {
 // RESET PASSWORD - Verify token and reset password
 router.post("/reset-password", async (req, res) => {
   const { token, newPassword } = req.body;
-  
+
   if (!token || !newPassword) {
     return res.status(400).json({ message: "Token and new password are required" });
   }
@@ -322,11 +313,11 @@ router.post("/reset-password", async (req, res) => {
 
   try {
     // Hash the token to compare with stored hash
-    const resetTokenHash = crypto.createHash('sha256').update(token).digest('hex');
-    
+    const resetTokenHash = crypto.createHash("sha256").update(token).digest("hex");
+
     const user = await User.findOne({
       resetPasswordToken: resetTokenHash,
-      resetPasswordExpiry: { $gt: Date.now() } // Check if token not expired
+      resetPasswordExpiry: { $gt: Date.now() }, // Check if token not expired
     });
 
     if (!user) {
@@ -335,7 +326,7 @@ router.post("/reset-password", async (req, res) => {
 
     // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    
+
     // Update password and clear reset token
     user.password = hashedPassword;
     user.resetPasswordToken = null;
@@ -343,7 +334,7 @@ router.post("/reset-password", async (req, res) => {
     await user.save();
 
     // Send confirmation email
-    const emailSubject = 'Password Reset Successful - FineMate';
+    const emailSubject = "Password Reset Successful - FineMate";
     const emailBody = `
       <h2>Password Reset Successful</h2>
       <p>Hello ${user.username},</p>
@@ -352,9 +343,9 @@ router.post("/reset-password", async (req, res) => {
       <p>If you didn't make this change, please contact support immediately.</p>
       <p>Best regards,<br>FineMate</p>
     `;
-    
+
     await sendEmail(user.email, emailSubject, emailBody);
-    
+
     res.json({ message: "✓ Password reset successfully. You can now login." });
   } catch (err) {
     res.status(500).json({ message: "Error resetting password: " + err.message });
@@ -364,7 +355,7 @@ router.post("/reset-password", async (req, res) => {
 // DELETE EMPLOYEE - PD only, deactivate employee account
 router.delete("/:id", [auth, checkRole("pd")], async (req, res) => {
   const { id } = req.params;
-  
+
   try {
     const user = await User.findById(id);
     if (!user) {
@@ -388,7 +379,7 @@ router.delete("/:id", [auth, checkRole("pd")], async (req, res) => {
     await user.save();
 
     // Send notification email to employee
-    const emailSubject = 'Account Deactivation Notice - FineMate';
+    const emailSubject = "Account Deactivation Notice - FineMate";
     const emailBody = `
       <h2>Account Deactivation</h2>
       <p>Hello ${username},</p>
@@ -396,11 +387,11 @@ router.delete("/:id", [auth, checkRole("pd")], async (req, res) => {
       <p>If you believe this is an error, please contact your administrator.</p>
       <p>Best regards,<br>FineMate</p>
     `;
-    
+
     try {
       await sendEmail(userEmail, emailSubject, emailBody);
     } catch (emailErr) {
-      console.warn('⚠️ Deactivation notification email not sent:', emailErr.message);
+      console.warn("⚠️ Deactivation notification email not sent:", emailErr.message);
     }
 
     res.json({ message: `✓ Employee "${username}" has been deactivated successfully` });
@@ -412,7 +403,7 @@ router.delete("/:id", [auth, checkRole("pd")], async (req, res) => {
 // REACTIVATE EMPLOYEE - PD only, reactivate deactivated employee
 router.put("/reactivate/:id", [auth, checkRole("pd")], async (req, res) => {
   const { id } = req.params;
-  
+
   try {
     const user = await User.findById(id);
     if (!user) {
@@ -432,7 +423,7 @@ router.put("/reactivate/:id", [auth, checkRole("pd")], async (req, res) => {
     await user.save();
 
     // Send notification email to employee
-    const emailSubject = 'Account Reactivation Notice - FineMate';
+    const emailSubject = "Account Reactivation Notice - FineMate";
     const emailBody = `
       <h2>Account Reactivation</h2>
       <p>Hello ${username},</p>
@@ -441,11 +432,11 @@ router.put("/reactivate/:id", [auth, checkRole("pd")], async (req, res) => {
       <p>If you have any questions, please contact your administrator.</p>
       <p>Best regards,<br>FineMate</p>
     `;
-    
+
     try {
       await sendEmail(userEmail, emailSubject, emailBody);
     } catch (emailErr) {
-      console.warn('⚠️ Reactivation notification email not sent:', emailErr.message);
+      console.warn("⚠️ Reactivation notification email not sent:", emailErr.message);
     }
 
     res.json({ message: `✓ Employee "${username}" has been reactivated successfully` });
@@ -457,7 +448,7 @@ router.put("/reactivate/:id", [auth, checkRole("pd")], async (req, res) => {
 // PERMANENTLY DELETE EMPLOYEE - PD only, delete from database and all their fines
 router.delete("/permanent/:id", [auth, checkRole("pd")], async (req, res) => {
   const { id } = req.params;
-  
+
   try {
     const user = await User.findById(id);
     if (!user) {
@@ -469,12 +460,12 @@ router.delete("/permanent/:id", [auth, checkRole("pd")], async (req, res) => {
     }
 
     const username = user.username;
-    
+
     // Delete all fines associated with this user
-    const Item = require('../models/Item');
+    const Item = require("../models/Item");
     const deleteResult = await Item.deleteMany({ userId: id });
     console.log(`[DELETE] Removed ${deleteResult.deletedCount} fines for user ${username}`);
-    
+
     // Permanently delete the user
     await User.findByIdAndDelete(id);
 
@@ -488,8 +479,8 @@ router.delete("/permanent/:id", [auth, checkRole("pd")], async (req, res) => {
 router.get("/active/list", [auth, checkRole("pd")], async (req, res) => {
   try {
     const activeEmployees = await User.find(
-      { isActive: true, role: { $ne: 'pd' } },  // Active users who are not PD
-      { username: 1, email: 1, _id: 1, role: 1 }
+      { isActive: true, role: { $ne: "pd" } }, // Active users who are not PD
+      { username: 1, email: 1, _id: 1, role: 1 },
     );
     res.json(activeEmployees);
   } catch (err) {
