@@ -1,3 +1,3 @@
 // Vercel serverless entry point
-import app from "../backend/index.js";
-export default app;
+const app = require("../backend/index.js");
+module.exports = app;
