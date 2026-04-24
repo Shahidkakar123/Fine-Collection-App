@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import axios from 'axios';
 import { useAuthStore } from './auth'; // Import auth store for token access
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 export const useFinesStore = defineStore('fines', {
   state: () => ({

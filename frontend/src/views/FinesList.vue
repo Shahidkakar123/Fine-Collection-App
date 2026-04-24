@@ -244,7 +244,7 @@ const isPD = computed(() => authStore.role === 'pd');
 
 const employees = ref([]);
 const loadingEmployees = ref(false);
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 const newFine = ref({
   selectedEmployee: '',

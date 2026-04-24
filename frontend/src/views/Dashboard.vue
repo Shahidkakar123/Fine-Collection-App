@@ -227,7 +227,7 @@ const authStore = useAuthStore();
 const finesStore = useFinesStore();
 const notificationStore = useNotificationStore();
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 // Display fines based on role - handle both string and ObjectId formats
 const displayedFines = computed(() => {

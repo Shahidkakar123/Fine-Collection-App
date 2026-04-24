@@ -178,7 +178,7 @@ const showPromoteModal = ref(false);
 const showDemoteModal = ref(false);
 const usernameToPromote = ref('');
 const usernameToDemote = ref('');
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;

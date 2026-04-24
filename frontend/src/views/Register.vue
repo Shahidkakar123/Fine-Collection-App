@@ -92,7 +92,7 @@ const form = ref({ username: '', email: '', password: '', phone: '' });
 const error = ref('');
 const success = ref('');
 const loading = ref(false);
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 
 const register = async () => {

@@ -1,5 +1,5 @@
 const express = require("express");
-const router = express.Router();
+const   router = express.Router();
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -8,6 +8,7 @@ const { auth, checkRole } = require("../middleware/auth");
 const { sendEmail } = require("../utils/email");
 
 require("dotenv").config({ path: require("path").join(__dirname, "../.env") });
+debugger
 // REGISTER - Create new employee account
 router.post("/register", async (req, res) => {
   const { username, email, password, phone } = req.body;
@@ -127,6 +128,7 @@ router.post("/refresh-token", auth, async (req, res) => {
 
 // GET all users - PD only, for employee selection when creating fines
 router.get("/", [auth, checkRole("pd")], async (req, res) => {
+  debugger
   try {
     const users = await User.find({}, { username: 1, email: 1, role: 1, _id: 1, isActive: 1 });
     res.json(users);
@@ -138,7 +140,7 @@ router.get("/", [auth, checkRole("pd")], async (req, res) => {
 // GET user by username - PD only
 router.get("/search/:username", [auth, checkRole("pd")], async (req, res) => {
   const { username } = req.params;
-
+debugger
   try {
     const user = await User.findOne({ username });
     if (!user) {
