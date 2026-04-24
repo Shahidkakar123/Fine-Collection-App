@@ -6,8 +6,8 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { auth, checkRole } = require("../middleware/auth");
 const { sendEmail } = require("../utils/email");
-require("dotenv").config();
 
+require("dotenv").config({ path: require('path').join(__dirname, '../.env') });
 // REGISTER - Create new employee account
 router.post("/register", 
   async (req, res) => {

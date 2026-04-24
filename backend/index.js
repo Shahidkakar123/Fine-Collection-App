@@ -12,7 +12,7 @@ const swaggerUi = require("swagger-ui-express");
 const yaml = require("js-yaml");
 const fs = require("fs");
 
-dotenv.config();
+dotenv.config({ path: require('path').join(__dirname, '.env') });
 const app = express();
 
 // Enable CORS for frontend requests
