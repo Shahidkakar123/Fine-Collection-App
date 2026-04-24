@@ -188,7 +188,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 const fetchEmployees = async () => {
   loading.value = true;
   try {
-    const response = await axios.get(`${API_BASE_URL}/api/users/`, {
+    const response = await axios.get(`${API_BASE_URL}/api/users`, {
       headers: { Authorization: `Bearer ${authStore.token}` }
     });
     employees.value = response.data;

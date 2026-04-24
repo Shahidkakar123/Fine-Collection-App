@@ -285,7 +285,7 @@ onMounted(async () => {
 const loadEmployees = async () => {
   try {
     loadingEmployees.value = true;
-    const response = await axios.get(`${API_BASE_URL}/api/users/`, {
+    const response = await axios.get(`${API_BASE_URL}/api/users`, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     });
     // Filter out PD themselves from list
