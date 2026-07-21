@@ -8,7 +8,10 @@ const { auth, checkRole } = require("../middleware/auth");
 const { sendEmail } = require("../utils/email");
 
 require("dotenv").config({ path: require("path").join(__dirname, "../.env") });
-debugger
+const PRINCIPAL_PD_USERNAME = "PD";
+
+const isPrincipalPD = (user) => user?.username === PRINCIPAL_PD_USERNAME;
+
 // REGISTER - Create new employee account
 router.post("/register", async (req, res) => {
   const { username, email, password, phone } = req.body;
@@ -39,6 +42,15 @@ router.post("/register", async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const passwordStrength = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+    if (!passwordStrength.test(password)) {
+      return res.status(400).json({ message: "Password must contain at least one letter and one number." });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    // Generate email verification token
+    const emailVerificationToken = crypto.randomBytes(32).toString("hex");
+    const emailVerificationExpiry = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
     const user = new User({
       username,
       email,
@@ -46,15 +58,51 @@ router.post("/register", async (req, res) => {
       password: hashedPassword,
       role: "employee",
       isActive: true, // Explicitly set new users as active
+      emailVerified: false,
+      emailVerificationToken,
+      emailVerificationExpiry,
     });
 
     await user.save();
+
+    // Send verification email
+    const verifyLink = `${process.env.FRONTEND_URL || "http://localhost:5173"}/verify-email/${emailVerificationToken}`;
+    const emailSubject = "Verify Your Email - FineMate";
+    const emailBody = `
+      <h2>Welcome to FineMate!</h2>
+      <p>Hello ${username},</p>
+      <p>Thank you for registering. Please verify your email address by clicking the link below:</p>
+      <p><a href="${verifyLink}" style="background-color: #0066cc; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">Verify Email</a></p>
+      <p>This link will expire in 24 hours.</p>
+      <p>If you did not register, please ignore this email.</p>
+      <p>Best regards,<br>FineMate</p>
+    `;
+    await sendEmail(email, emailSubject, emailBody);
+
     res.status(201).json({
-      message: "✓ User registered successfully as employee",
+      message: "✓ User registered successfully as employee. Please check your email to verify your account.",
       userId: user._id,
     });
   } catch (err) {
     res.status(500).json({ message: "Error registering user: " + err.message });
+  }
+});
+
+// EMAIL VERIFICATION - Verify email with token
+router.get('/verify-email/:token', async (req, res) => {
+  const { token } = req.params;
+  try {
+    const user = await User.findOne({ emailVerificationToken: token, emailVerificationExpiry: { $gt: Date.now() } });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired verification token.' });
+    }
+    user.emailVerified = true;
+    user.emailVerificationToken = null;
+    user.emailVerificationExpiry = null;
+    await user.save();
+    return res.json({ message: '✓ Email verified successfully. You can now log in.' });
+  } catch (err) {
+    return res.status(500).json({ message: 'Error verifying email: ' + err.message });
   }
 });
 
@@ -82,7 +130,7 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "8h" });
+    const token = jwt.sign({ id: user._id, role: user.role, username: user.username }, process.env.JWT_SECRET, { expiresIn: "8h" });
 
     res.json({
       token,
@@ -111,7 +159,7 @@ router.post("/refresh-token", auth, async (req, res) => {
     }
 
     // Create a new token with the current role from the database
-    const newToken = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "8h" });
+    const newToken = jwt.sign({ id: user._id, role: user.role, username: user.username }, process.env.JWT_SECRET, { expiresIn: "8h" });
 
     res.json({
       token: newToken,
@@ -128,7 +176,6 @@ router.post("/refresh-token", auth, async (req, res) => {
 
 // GET all users - PD only, for employee selection when creating fines
 router.get("/", [auth, checkRole("pd")], async (req, res) => {
-  debugger
   try {
     const users = await User.find({}, { username: 1, email: 1, role: 1, _id: 1, isActive: 1 });
     res.json(users);
@@ -140,7 +187,6 @@ router.get("/", [auth, checkRole("pd")], async (req, res) => {
 // GET user by username - PD only
 router.get("/search/:username", [auth, checkRole("pd")], async (req, res) => {
   const { username } = req.params;
-debugger
   try {
     const user = await User.findOne({ username });
     if (!user) {
@@ -157,7 +203,7 @@ debugger
   }
 });
 
-// PROMOTE USER - PD only, promote employee to PD
+// PROMOTE USER - Principal PD only, promote one employee to Acting Project Director
 router.put("/promote/:username", [auth, checkRole("pd")], async (req, res) => {
   const { username } = req.params;
 
@@ -171,6 +217,13 @@ router.put("/promote/:username", [auth, checkRole("pd")], async (req, res) => {
   }
 
   try {
+    const requester = await User.findById(req.user.id);
+    if (!isPrincipalPD(requester)) {
+      return res.status(403).json({
+        message: "Only the Principal Project Director can promote an Acting Project Director.",
+      });
+    }
+
     const user = await User.findOne({ username: username.trim() });
     if (!user) {
       return res.status(404).json({
@@ -178,17 +231,38 @@ router.put("/promote/:username", [auth, checkRole("pd")], async (req, res) => {
       });
     }
 
+    if (user.username === PRINCIPAL_PD_USERNAME) {
+      return res.status(400).json({ message: "The Principal Project Director account cannot be promoted." });
+    }
+
+    if (!user.isActive) {
+      return res.status(400).json({ message: `User "${username}" must be active before they can become Acting Project Director` });
+    }
+
     if (user.role === "pd") {
-      return res.status(400).json({ message: `User "${username}" is already a Project Director` });
+      return res.status(400).json({ message: `User "${username}" is already an Acting Project Director` });
+    }
+
+    const existingActingPD = await User.findOne({
+      role: "pd",
+      username: { $ne: PRINCIPAL_PD_USERNAME },
+      _id: { $ne: user._id },
+    });
+
+    if (existingActingPD) {
+      return res.status(409).json({
+        message: `${existingActingPD.username} is already the Acting Project Director. Demote them before promoting another user.`,
+      });
     }
 
     user.role = "pd";
     await user.save();
 
     res.json({
-      message: `✓ User "${username}" has been successfully promoted to Project Director`,
+      message: `✓ User "${username}" has been successfully promoted to Acting Project Director`,
       user: {
         id: user._id,
+        _id: user._id,
         username: user.username,
         role: user.role,
       },
@@ -199,7 +273,7 @@ router.put("/promote/:username", [auth, checkRole("pd")], async (req, res) => {
   }
 });
 
-// DEMOTE USER - PD only, demote PD back to employee
+// DEMOTE USER - Principal PD only, demote Acting Project Director back to employee
 router.put("/demote/:username", [auth, checkRole("pd")], async (req, res) => {
   const { username } = req.params;
 
@@ -218,6 +292,13 @@ router.put("/demote/:username", [auth, checkRole("pd")], async (req, res) => {
   }
 
   try {
+    const requester = await User.findById(req.user.id);
+    if (!isPrincipalPD(requester)) {
+      return res.status(403).json({
+        message: "Only the Principal Project Director can demote the Acting Project Director.",
+      });
+    }
+
     console.log("[DEMOTE] Searching for user:", username.trim());
     const user = await User.findOne({ username: username.trim() });
 
@@ -229,6 +310,11 @@ router.put("/demote/:username", [auth, checkRole("pd")], async (req, res) => {
     }
 
     console.log("[DEMOTE] User found. Current role:", user.role);
+
+    if (user.username === PRINCIPAL_PD_USERNAME) {
+      console.log("[DEMOTE] Attempted to demote Principal PD");
+      return res.status(400).json({ message: "The Principal Project Director cannot be demoted." });
+    }
 
     if (user.role === "employee") {
       console.log("[DEMOTE] User is already employee");
@@ -243,6 +329,7 @@ router.put("/demote/:username", [auth, checkRole("pd")], async (req, res) => {
       message: `✓ User "${username}" has been successfully demoted to Employee`,
       user: {
         id: user._id,
+        _id: user._id,
         username: user.username,
         role: user.role,
       },
@@ -477,8 +564,8 @@ router.delete("/permanent/:id", [auth, checkRole("pd")], async (req, res) => {
   }
 });
 
-// GET ACTIVE EMPLOYEES - PD only, returns list of active non-PD users
-router.get("/active/list", [auth, checkRole("pd")], async (req, res) => {
+// GET ACTIVE EMPLOYEES - authenticated users, returns active non-PD users
+router.get("/active/list", auth, async (req, res) => {
   try {
     const activeEmployees = await User.find(
       { isActive: true, role: { $ne: "pd" } }, // Active users who are not PD

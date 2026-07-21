@@ -7,7 +7,7 @@
     </h3>
     <p class="text-gray-400 mt-2">{{ fine.description }}</p>
     <p class="text-gray-400 mt-1">Category: {{ fine.category }}</p>
-    <p class="text-secondary font-bold text-lg mt-2">${{ fine.value }}</p>
+    <p class="text-secondary font-bold text-lg mt-2">Rs {{ formatAmount(fine.value) }}</p>
     <div class="mt-4 flex space-x-3">
       <button
         @click="$emit('edit', fine)"
@@ -28,4 +28,11 @@
 <script setup>
 defineProps(['fine']);
 defineEmits(['edit', 'delete']);
+
+const formatAmount = (value) => {
+  return Number(value || 0).toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
 </script>

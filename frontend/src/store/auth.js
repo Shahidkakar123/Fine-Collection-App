@@ -12,7 +12,7 @@ let initialAuthenticated = false;
 if (savedToken) {
   try {
     const decoded = jwtDecode(savedToken);
-    initialUser = { id: decoded.id, role: decoded.role };
+    initialUser = { id: decoded.id, role: decoded.role, username: decoded.username };
     initialAuthenticated = true;
     axios.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`;
   } catch (err) {
@@ -33,7 +33,7 @@ export const useAuthStore = defineStore('auth', {
         const res = await axios.post(`${API_BASE_URL}/api/users/login`, credentials);
         this.token = res.data.token;
         const decoded = jwtDecode(this.token); // Decode token
-        this.user = { id: decoded.id, role: decoded.role }; // Store user ID and role
+        this.user = { id: decoded.id, role: decoded.role, username: decoded.username };
         this.role = decoded.role;
         this.isAuthenticated = true;
         localStorage.setItem('token', this.token);
@@ -43,6 +43,22 @@ export const useAuthStore = defineStore('auth', {
         console.error('Login error:', err);
         throw err;
       }
+    },
+    async refreshToken() {
+      const res = await axios.post(`${API_BASE_URL}/api/users/refresh-token`, {}, {
+        headers: { Authorization: `Bearer ${this.token}` },
+      });
+      this.token = res.data.token;
+      this.user = {
+        id: res.data.user.id,
+        role: res.data.user.role,
+        username: res.data.user.username,
+      };
+      this.role = res.data.user.role;
+      localStorage.setItem('token', this.token);
+      localStorage.setItem('role', this.role);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
+      return res.data;
     },
     logout() {
       this.isAuthenticated = false;

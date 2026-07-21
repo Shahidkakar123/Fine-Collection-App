@@ -111,10 +111,13 @@ const register = async () => {
     return;
   }
 
-  if (!form.value.email.includes('@')) {
-    error.value = 'Please enter a valid email address';
+  // Stricter email validation for common providers
+  const emailRegex = /^[A-Za-z0-9._%+-]+@(gmail|yahoo|outlook|hotmail)\.(com|net|org)$/i;
+  if (!emailRegex.test(form.value.email)) {
+    error.value = 'Please enter a valid email address.';
     return;
   }
+  // Note: To verify true existence, a verification email is required after registration.'
 
   if (form.value.password.length < 6) {
     error.value = 'Password must be at least 6 characters';

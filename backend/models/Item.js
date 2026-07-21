@@ -8,6 +8,8 @@ const itemSchema = new mongoose.Schema({
   value: { type: Number, required: true },
   date: { type: Date, default: Date.now }, // Date of fine
   status: { type: String, enum: ['paid', 'pending'], default: 'pending' },
+  cycleClosedAt: { type: Date, default: null },
+  cycleClosedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Item', itemSchema);
