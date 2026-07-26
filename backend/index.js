@@ -7,6 +7,7 @@ const connectDB = require("./utils/db");
 const userRoutes = require("./routes/users");
 const itemRoutes = require("./routes/items");
 const configRoutes = require("./routes/config");
+const messageRoutes = require('./routes/messages');
 
 dotenv.config({ path: path.join(__dirname, ".env") });
 
@@ -38,6 +39,7 @@ app.get("/", (req, res) => {
   res.json({ message: "FineMate API running" });
 });
 
+app.use('/api/messages', messageRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/items", itemRoutes);
 app.use("/api/config", configRoutes);

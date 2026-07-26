@@ -22,7 +22,7 @@
             <h3 class="text-lg font-bold text-yellow-900">New Fines Assigned!</h3>
             <div class="mt-2 space-y-1">
               <p v-for="fine in newFinesDetected" :key="fine._id" class="text-sm text-yellow-800">
-                • <strong>${{ fine.value }}</strong> for <strong>{{ fine.category }}</strong> - {{ fine.description }}
+                • <strong>Rs {{ formatAmount(fine.value) }}</strong> for <strong>{{ fine.category }}</strong> - {{ fine.description }}
               </p>
             </div>
           </div>
@@ -41,11 +41,11 @@
             </div>
             <div class="bg-green-50 rounded-lg p-4 border-l-4 border-green-400">
               <p class="text-xs text-green-600 font-semibold uppercase">Paid</p>
-              <p class="text-2xl font-bold text-green-900 mt-2">${{ paidTotal }}</p>
+              <p class="text-2xl font-bold text-green-900 mt-2">Rs {{ paidTotal }}</p>
             </div>
             <div class="bg-red-50 rounded-lg p-4 border-l-4 border-red-400">
               <p class="text-xs text-red-600 font-semibold uppercase">Outstanding</p>
-              <p class="text-2xl font-bold text-red-900 mt-2">${{ unpaidTotal }}</p>
+              <p class="text-2xl font-bold text-red-900 mt-2">Rs {{ unpaidTotal }}</p>
             </div>
           </div>
         </div>
@@ -126,7 +126,7 @@
                     
                     <!-- Amount -->
                     <div class="text-right ml-4">
-                      <p class="text-3xl font-bold text-gray-900">${{ fine.value }}</p>
+                      <p class="text-3xl font-bold text-gray-900">Rs {{ formatAmount(fine.value) }}</p>
                       <p v-if="fine.status !== 'paid'" class="text-xs text-gray-600 mt-1">Amount Due</p>
                     </div>
                   </div>
@@ -151,6 +151,13 @@ const finesStore = useFinesStore();
 const searchQuery = ref('');
 const filterStatus = ref('');
 const newFinesSeen = ref(new Set());
+
+const formatAmount = (value) => {
+  return Number(value || 0).toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
 
 // Get user's fines - handle both string and ObjectId formats
 const userFines = computed(() => {
@@ -193,17 +200,15 @@ const newFinesDetected = computed(() => {
 
 // Calculate totals
 const paidTotal = computed(() => {
-  return filteredFines.value
+  return formatAmount(filteredFines.value
     .filter(fine => fine.status === 'paid')
-    .reduce((sum, fine) => sum + fine.value, 0)
-    .toFixed(2);
+    .reduce((sum, fine) => sum + fine.value, 0));
 });
 
 const unpaidTotal = computed(() => {
-  return filteredFines.value
+  return formatAmount(filteredFines.value
     .filter(fine => fine.status !== 'paid')
-    .reduce((sum, fine) => sum + fine.value, 0)
-    .toFixed(2);
+    .reduce((sum, fine) => sum + fine.value, 0));
 });
 
 // Mark fines as seen on mount

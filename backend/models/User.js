@@ -9,6 +9,9 @@ const userSchema = new mongoose.Schema({
   resetPasswordToken: { type: String, default: null }, // Token for password reset
   resetPasswordExpiry: { type: Date, default: null }, // Token expiry time (15 minutes)
   isActive: { type: Boolean, default: true }, // For soft delete when PD removes employee
+  emailVerified: { type: Boolean, default: false }, // Email verification status
+  emailVerificationToken: { type: String, default: null }, // Token for email verification
+  emailVerificationExpiry: { type: Date, default: null }, // Expiry for email verification token
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

@@ -26,6 +26,10 @@ router.put("/:key", auth, checkRole('pd'), async (req, res) => {
       return res.status(400).json({ message: "Value is required" });
     }
 
+    if (req.params.key === "amountUsed" && (Number(value) < 0 || Number(value) > 999999)) {
+      return res.status(400).json({ message: "Amount must be between 0 and 999999" });
+    }
+
     let config = await Config.findOne({ key: req.params.key });
     
     if (!config) {
