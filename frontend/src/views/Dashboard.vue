@@ -256,7 +256,7 @@ const authStore = useAuthStore();
 const finesStore = useFinesStore();
 const notificationStore = useNotificationStore();
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 const formatAmount = (value) => {
   return Number(value || 0).toLocaleString('en-US', {

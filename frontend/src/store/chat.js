@@ -4,7 +4,7 @@ import axios from 'axios';
 import Pusher from 'pusher-js';
 import { useAuthStore } from './auth';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const useChatStore = defineStore('chat', () => {
   const authStore = useAuthStore();
@@ -49,8 +49,15 @@ export const useChatStore = defineStore('chat', () => {
     const myId = authStore.user?.id;
     if (!myId) return;
 
-    pusherClient.value = new Pusher(import.meta.env.VITE_PUSHER_KEY, {
-      cluster: import.meta.env.VITE_PUSHER_CLUSTER,
+    const pusherKey = import.meta.env.VITE_PUSHER_KEY;
+    const pusherCluster = import.meta.env.VITE_PUSHER_CLUSTER;
+    if (!pusherKey || !pusherCluster) {
+      console.warn('Pusher is not configured. Real-time chat updates are disabled.');
+      return;
+    }
+
+    pusherClient.value = new Pusher(pusherKey, {
+      cluster: pusherCluster,
     });
 
     const myChannel = pusherClient.value.subscribe(`user-${myId}`);

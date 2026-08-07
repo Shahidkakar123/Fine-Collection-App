@@ -24,6 +24,47 @@ function validatePassword(password) {
   return { valid: true, normalized };
 }
 
+function validateFinePayload(payload = {}) {
+  const normalized = {
+    userId: payload.userId,
+    name: String(payload.name || '').trim(),
+    description: String(payload.description || '').trim(),
+    category: String(payload.category || '').trim(),
+    value: payload.value,
+  };
+
+  if (!normalized.userId) {
+    return { valid: false, message: 'User reference is required.' };
+  }
+
+  if (!normalized.name) {
+    return { valid: false, message: 'Fine name is required.' };
+  }
+
+  if (!normalized.category) {
+    return { valid: false, message: 'Fine category is required.' };
+  }
+
+  if (normalized.category.toLowerCase() === 'other' && !normalized.description) {
+    return { valid: false, message: 'Description is required when category is Other.' };
+  }
+
+  const numericValue = Number(normalized.value);
+  if (!Number.isFinite(numericValue)) {
+    return { valid: false, message: 'Fine value must be a valid number.' };
+  }
+
+  if (numericValue <= 0) {
+    return { valid: false, message: 'Fine value must be positive.' };
+  }
+
+  if (numericValue > 999999) {
+    return { valid: false, message: 'Fine value cannot exceed 999999.' };
+  }
+
+  return { valid: true, normalized };
+}
+
 async function validateEmailAddress(email, options = {}) {
   const normalized = normalizeEmail(email);
   const checkDomain = options.checkDomain !== false;
@@ -49,4 +90,4 @@ async function validateEmailAddress(email, options = {}) {
   }
 }
 
-module.exports = { EMAIL_REGEX, normalizeEmail, validatePassword, validateEmailAddress };
+module.exports = { EMAIL_REGEX, normalizeEmail, validatePassword, validateFinePayload, validateEmailAddress };
