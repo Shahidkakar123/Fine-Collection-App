@@ -222,6 +222,7 @@ const authStore = useAuthStore();
 const finesStore = useFinesStore();
 const notificationStore = useNotificationStore();
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 const employees = ref([]);
 const loading = ref(false);
 const showDeleteModal = ref(false);
@@ -233,7 +234,6 @@ const permanently_deleting = ref(null);
 const promoting = ref(null);
 const demoting = ref(null);
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 const PRINCIPAL_PD_USERNAME = 'PD';
 
 const actingPD = computed(() => employees.value.find(employee =>

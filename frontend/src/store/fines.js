@@ -3,7 +3,7 @@ import axios from 'axios';
 import Pusher from 'pusher-js';
 import { useAuthStore } from './auth'; // Import auth store for token access
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 const getFineUserId = (fine) => {
   if (!fine?.userId) return '';

@@ -3,11 +3,11 @@ const app = require('../index');
 const mongoose = require('mongoose');
 const User = require('../models/User');
 const Item = require('../models/Item');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 describe('Fine Collection API', () => {
   let token;
-  let userId;
+  let employeeId;
   let itemId;
 
   beforeAll(async () => {
@@ -17,14 +17,28 @@ describe('Fine Collection API', () => {
     });
 
     const hashedPassword = await bcrypt.hash('testpass', 10);
-    await User.create({ username: 'testuser', password: hashedPassword });
+    await User.create({
+      username: 'testuser',
+      password: hashedPassword,
+      email: 'testuser@example.com',
+      role: 'pd',
+      emailVerified: true,
+    });
+
+    const employeeUser = await User.create({
+      username: 'employee1',
+      password: hashedPassword,
+      email: 'employee1@example.com',
+      role: 'employee',
+      emailVerified: true,
+    });
 
     const loginResponse = await request(app)
       .post('/api/users/login')
       .send({ username: 'testuser', password: 'testpass' });
     expect(loginResponse.status).toBe(200);
     token = loginResponse.body.token;
-    userId = (await User.findOne({ username: 'testuser' }))._id;
+    employeeId = employeeUser._id;
   });
 
   afterAll(async () => {
@@ -38,6 +52,7 @@ describe('Fine Collection API', () => {
       .post('/api/items')
       .set('Authorization', `Bearer ${token}`)
       .send({
+        userId: employeeId,
         name: 'Test Coin',
         description: 'A test coin',
         category: 'Coin',
@@ -64,6 +79,7 @@ describe('Fine Collection API', () => {
       .put(`/api/items/${itemId}`)
       .set('Authorization', `Bearer ${token}`)
       .send({
+        userId: employeeId,
         name: 'Updated Test Coin',
         description: 'Updated description',
         category: 'Coin',
@@ -79,6 +95,6 @@ describe('Fine Collection API', () => {
       .delete(`/api/items/${itemId}`)
       .set('Authorization', `Bearer ${token}`);
     expect(response.status).toBe(200);
-    expect(response.body.message).toBe('Item deleted');
+    expect(response.body.message).toBe('Fine deleted successfully');
   });
 });

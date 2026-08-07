@@ -6,6 +6,7 @@ const Config = require('../models/Config');
 const User = require('../models/User');
 const { auth, checkRole } = require('../middleware/auth');
 const { sendEmail } = require('../utils/email');
+const { validateFinePayload } = require('../utils/validation');
 
 const PRINCIPAL_PD_USERNAME = 'PD';
 const OBJECT_ID_ROUTE = '/:id([0-9a-fA-F]{24})';
@@ -110,34 +111,22 @@ router.get(OBJECT_ID_ROUTE, auth, async (req, res) => {
 
 // CREATE fine - PD only
 router.post('/', [auth, checkRole('pd')], async (req, res) => {
+  const validation = validateFinePayload(req.body);
+  if (!validation.valid) {
+    return res.status(400).json({ message: validation.message });
+  }
+
   const item = new Item({
-    userId: req.body.userId,
-    name: req.body.name,
-    description: req.body.description,
-    category: req.body.category,
-    value: req.body.value,
+    userId: validation.normalized.userId,
+    name: validation.normalized.name,
+    description: validation.normalized.description,
+    category: validation.normalized.category,
+    value: validation.normalized.value,
     status: req.body.status || 'pending',
   });
 
   try {
-    // Validate required fields
-    if (!item.userId || !item.name || !item.category || item.value == null) {
-      return res.status(400).json({ message: 'Missing required fields' });
-    }
-
-    if (item.category.trim().toLowerCase() === 'other' && !item.description?.trim()) {
-      return res.status(400).json({ message: 'Description is required when category is Other' });
-    }
-
-    if (item.value <= 0) {
-      return res.status(400).json({ message: 'Fine value must be positive' });
-    }
-
-    if (item.value > MAX_FINE_VALUE) {
-      return res.status(400).json({ message: 'Fine value cannot exceed 6 digits' });
-    }
-
-    const employee = await User.findById(req.body.userId);
+    const employee = await User.findById(validation.normalized.userId);
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
