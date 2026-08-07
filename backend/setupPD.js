@@ -5,7 +5,7 @@
 
 require('dotenv').config();
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const User = require('./models/User');
 
 const PD_USERNAME = 'PD';
@@ -24,6 +24,12 @@ async function setupPDUser() {
       console.log(`✓ PD user "${PD_USERNAME}" already exists`);
       console.log(`  ID: ${existingPD._id}`);
       console.log(`  Role: ${existingPD.role}`);
+      // Ensure PD email is verified so demo login works
+      if (!existingPD.emailVerified) {
+        existingPD.emailVerified = true;
+        await existingPD.save();
+        console.log('✓ PD emailVerified set to true for demo login');
+      }
       console.log('\nIf you want to reset the password, update the PD_PASSWORD variable in this script, then run again.');
       process.exit(0);
     }
@@ -38,7 +44,8 @@ async function setupPDUser() {
       email: PD_EMAIL,
       password: hashedPassword,
       role: 'pd',
-      isActive: true
+      isActive: true,
+      emailVerified: true,
     });
 
     await pdUser.save();

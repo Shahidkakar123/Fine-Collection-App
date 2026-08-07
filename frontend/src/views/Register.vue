@@ -89,6 +89,8 @@ import axios from 'axios';
 
 const router = useRouter();
 const form = ref({ username: '', email: '', password: '', phone: '' });
+// At least 6 characters, with at least one letter and one number
+const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
 const error = ref('');
 const success = ref('');
 const loading = ref(false);
@@ -119,8 +121,8 @@ const register = async () => {
   }
   // Note: To verify true existence, a verification email is required after registration.'
 
-  if (form.value.password.length < 6) {
-    error.value = 'Password must be at least 6 characters';
+  if (!passwordRegex.test(form.value.password)) {
+    error.value = 'Password must be at least 6 characters and contain both letters and numbers';
     return;
   }
 
@@ -136,7 +138,7 @@ const register = async () => {
     // Redirect after 2 seconds
     setTimeout(() => {
       router.push('/login');
-    }, 2000);
+    }, 3000);
   } catch (err) {
     // Show detailed error from backend or generic error
     if (err.response?.data?.message) {

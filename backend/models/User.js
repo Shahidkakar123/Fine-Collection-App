@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
+  username: { type: String, required: true, unique: true, trim: true },
   password: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   phone: { type: String, required: false }, // Phone number for future SMS service
   role: { type: String, enum: ['pd', 'employee'], required: true, default: 'employee' },
   resetPasswordToken: { type: String, default: null }, // Token for password reset

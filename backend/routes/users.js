@@ -6,6 +6,8 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { auth, checkRole } = require("../middleware/auth");
 const { sendEmail } = require("../utils/email");
+const { validatePassword, validateEmailAddress, normalizeEmail } = require("../utils/validation");
+const { verifyEmailToken } = require("../utils/verification");
 
 require("dotenv").config({ path: require("path").join(__dirname, "../.env") });
 const PRINCIPAL_PD_USERNAME = "PD";
@@ -14,7 +16,10 @@ const isPrincipalPD = (user) => user?.username === PRINCIPAL_PD_USERNAME;
 
 // REGISTER - Create new employee account
 router.post("/register", async (req, res) => {
-  const { username, email, password, phone } = req.body;
+  const username = String(req.body.username || "").trim();
+  const email = normalizeEmail(req.body.email);
+  const password = String(req.body.password || "");
+  const phone = req.body.phone ? String(req.body.phone).trim() : "";
 
   if (!username || !email || !password) {
     return res.status(400).json({ message: "Username, email, and password are required" });
@@ -24,24 +29,17 @@ router.post("/register", async (req, res) => {
     return res.status(400).json({ message: "Username must be at least 3 characters" });
   }
 
-  if (!email.includes("@")) {
-    return res.status(400).json({ message: "Please provide a valid email address" });
+  const passwordValidation = validatePassword(password);
+  if (!passwordValidation.valid) {
+    return res.status(400).json({ message: passwordValidation.message });
   }
 
-  if (password.length < 6) {
-    return res.status(400).json({ message: "Password must be at least 6 characters" });
+  const emailValidation = await validateEmailAddress(email);
+  if (!emailValidation.valid) {
+    return res.status(400).json({ message: emailValidation.message });
   }
 
   try {
-    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
-    if (existingUser) {
-      if (existingUser.username === username) {
-        return res.status(400).json({ message: "Username already exists" });
-      }
-      return res.status(400).json({ message: "Email already registered" });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
     const passwordStrength = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
     if (!passwordStrength.test(password)) {
       return res.status(400).json({ message: "Password must contain at least one letter and one number." });
@@ -49,12 +47,13 @@ router.post("/register", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     // Generate email verification token
-    const emailVerificationToken = crypto.randomBytes(32).toString("hex");
+    const emailVerificationTokenRaw = crypto.randomBytes(32).toString("hex");
+    const emailVerificationToken = crypto.createHash("sha256").update(emailVerificationTokenRaw).digest("hex");
     const emailVerificationExpiry = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
     const user = new User({
       username,
-      email,
-      phone, // Optional phone for future SMS service
+      email: emailValidation.normalized,
+      phone,
       password: hashedPassword,
       role: "employee",
       isActive: true, // Explicitly set new users as active
@@ -65,8 +64,8 @@ router.post("/register", async (req, res) => {
 
     await user.save();
 
-    // Send verification email
-    const verifyLink = `${process.env.FRONTEND_URL || "http://localhost:5173"}/verify-email/${emailVerificationToken}`;
+    // Send verification email. Set FRONTEND_URL in .env if your app runs on a different port.
+    const verifyLink = `${process.env.FRONTEND_URL || "http://localhost:5174"}/verify-email/${emailVerificationTokenRaw}`;
     const emailSubject = "Verify Your Email - FineMate";
     const emailBody = `
       <h2>Welcome to FineMate!</h2>
@@ -85,24 +84,6 @@ router.post("/register", async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ message: "Error registering user: " + err.message });
-  }
-});
-
-// EMAIL VERIFICATION - Verify email with token
-router.get('/verify-email/:token', async (req, res) => {
-  const { token } = req.params;
-  try {
-    const user = await User.findOne({ emailVerificationToken: token, emailVerificationExpiry: { $gt: Date.now() } });
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid or expired verification token.' });
-    }
-    user.emailVerified = true;
-    user.emailVerificationToken = null;
-    user.emailVerificationExpiry = null;
-    await user.save();
-    return res.json({ message: '✓ Email verified successfully. You can now log in.' });
-  } catch (err) {
-    return res.status(500).json({ message: 'Error verifying email: ' + err.message });
   }
 });
 
@@ -125,6 +106,10 @@ router.post("/login", async (req, res) => {
       return res.status(403).json({ message: "Your account has been deactivated. Please contact your administrator." });
     }
 
+    if (!user.emailVerified) {
+      return res.status(403).json({ message: "Please verify your email before logging in." });
+    }
+
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
       return res.status(401).json({ message: "Invalid credentials" });
@@ -143,6 +128,15 @@ router.post("/login", async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: "Error logging in: " + err.message });
   }
+});
+
+// VERIFY EMAIL - Confirm the email verification token
+router.get("/verify-email/:token", async (req, res) => {
+  const result = await verifyEmailToken(req.params.token);
+  if (result.success) {
+    return res.json({ message: result.message });
+  }
+  return res.status(400).json({ message: result.message });
 });
 
 // REFRESH TOKEN - Get a fresh token with current role from database (call after role changes)

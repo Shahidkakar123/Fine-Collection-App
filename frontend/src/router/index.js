@@ -7,6 +7,7 @@ import Timeline from '../views/Timeline.vue';
 import FinesList from '../views/FinesList.vue';
 import ForgotPassword from '../views/ForgotPassword.vue';
 import ResetPassword from '../views/ResetPassword.vue';
+import VerifyEmail from '../views/VerifyEmail.vue';
 import EmployeeManagement from '../views/EmployeeManagement.vue';
 import Chat from '../views/Chat.vue';
 
@@ -21,6 +22,7 @@ const routes = [
   { path: '/chat',      component: Chat,      meta: { requiresAuth: true } },
   { path: '/forgot-password', component: ForgotPassword, meta: { requiresGuest: true } },
   { path: '/reset-password/:token', component: ResetPassword, meta: { requiresGuest: true } },
+  { path: '/verify-email/:token', component: VerifyEmail, meta: { requiresGuest: true } },
   { path: '/:pathMatch(.*)*', redirect: '/dashboard' },
 ];
 

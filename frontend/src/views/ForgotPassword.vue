@@ -66,7 +66,9 @@ const submitForm = async () => {
   error.value = '';
   success.value = '';
 
-  if (!form.value.email.includes('@')) {
+  const emailRegex = /^(?!.*\.\.)(?!.*\.$)(?!.*@.*@)[A-Za-z0-9](?:[A-Za-z0-9._%+-]{0,62}[A-Za-z0-9])?@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$/;
+
+  if (!emailRegex.test(form.value.email.trim().toLowerCase())) {
     error.value = 'Please enter a valid email address';
     return;
   }

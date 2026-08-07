@@ -184,7 +184,7 @@
               <p class="text-sm text-gray-500 text-center leading-relaxed">
                 <span class="font-semibold text-gray-800">{{ selectedEmployee?.username }}</span>
                 will be <span class="font-semibold text-red-600">permanently removed</span>
-                from the database along with all their records.
+                 along with all their records.
               </p>
               <div class="flex gap-3 mt-6">
                 <button

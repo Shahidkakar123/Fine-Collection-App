@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const path = require("path");
 const connectDB = require("./utils/db");
+const { verifyEmailToken } = require("./utils/verification");
 const userRoutes = require("./routes/users");
 const itemRoutes = require("./routes/items");
 const configRoutes = require("./routes/config");
@@ -37,6 +38,14 @@ app.use(async (req, res, next) => {
 
 app.get("/", (req, res) => {
   res.json({ message: "FineMate API running" });
+});
+
+app.get("/verify-email/:token", async (req, res) => {
+  const result = await verifyEmailToken(req.params.token);
+  if (result.success) {
+    return res.json({ message: result.message });
+  }
+  return res.status(400).json({ message: result.message });
 });
 
 app.use('/api/messages', messageRoutes);

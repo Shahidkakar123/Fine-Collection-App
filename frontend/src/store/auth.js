@@ -17,6 +17,8 @@ if (savedToken) {
     axios.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`;
   } catch (err) {
     console.warn('Invalid stored token, clearing auth header:', err.message);
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
   }
 }
 
@@ -60,6 +62,29 @@ export const useAuthStore = defineStore('auth', {
       axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
       return res.data;
     },
+    async initializeAuth() {
+      if (!this.token) return;
+      try {
+        const res = await axios.post(`${API_BASE_URL}/api/users/refresh-token`, {}, {
+          headers: { Authorization: `Bearer ${this.token}` },
+        });
+        this.token = res.data.token;
+        this.user = {
+          id: res.data.user.id,
+          role: res.data.user.role,
+          username: res.data.user.username,
+        };
+        this.role = res.data.user.role;
+        this.isAuthenticated = true;
+        localStorage.setItem('token', this.token);
+        localStorage.setItem('role', this.role);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
+      } catch (err) {
+        console.warn('Stored auth token invalid, clearing session:', err.response?.data?.message || err.message);
+        this.logout();
+      }
+    },
+
     logout() {
       this.isAuthenticated = false;
       this.token = '';
