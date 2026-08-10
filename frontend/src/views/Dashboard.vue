@@ -256,7 +256,8 @@ const authStore = useAuthStore();
 const finesStore = useFinesStore();
 const notificationStore = useNotificationStore();
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const rawApiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+const API_BASE_URL = rawApiUrl.endsWith('/api') ? rawApiUrl.slice(0, -4) : rawApiUrl;
 
 const formatAmount = (value) => {
   return Number(value || 0).toLocaleString('en-US', {

@@ -4,11 +4,12 @@ import axios from 'axios';
 import Pusher from 'pusher-js';
 import { useAuthStore } from './auth';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const rawApiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+const API_BASE_URL = rawApiUrl.endsWith('/api') ? rawApiUrl.slice(0, -4) : rawApiUrl;
 
 export const useChatStore = defineStore('chat', () => {
   const authStore = useAuthStore();
-  
+
   // Helpers: normalize ids and dedupe messages robustly
   const normalizeId = (id) => {
     if (id === null || id === undefined) return id;

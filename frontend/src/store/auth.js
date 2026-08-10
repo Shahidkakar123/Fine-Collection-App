@@ -2,7 +2,8 @@ import { defineStore } from 'pinia';
 import axios from 'axios';
 import jwtDecode from 'jwt-decode';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const rawApiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+const API_BASE_URL = rawApiUrl.endsWith('/api') ? rawApiUrl.slice(0, -4) : rawApiUrl;
 
 const savedToken = localStorage.getItem('token') || '';
 const savedRole = localStorage.getItem('role') || 'employee';

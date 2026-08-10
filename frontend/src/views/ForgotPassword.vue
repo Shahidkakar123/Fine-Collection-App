@@ -60,7 +60,8 @@ const form = ref({ email: '' });
 const error = ref('');
 const success = ref('');
 const loading = ref(false);
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const rawApiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+const API_BASE_URL = rawApiUrl.endsWith('/api') ? rawApiUrl.slice(0, -4) : rawApiUrl;
 
 const submitForm = async () => {
   error.value = '';
