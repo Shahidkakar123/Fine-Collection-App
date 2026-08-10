@@ -19,8 +19,8 @@ import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 
-const rawApiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
-const API_BASE_URL = rawApiUrl.endsWith('/api') ? rawApiUrl.slice(0, -4) : rawApiUrl;
+// const rawApiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+// const API_BASE_URL = rawApiUrl.endsWith('/api') ? rawApiUrl.slice(0, -4) : rawApiUrl;
 
 const route = useRoute();
 const loading = ref(true);
