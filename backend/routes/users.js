@@ -1,5 +1,5 @@
 const express = require("express");
-const   router = express.Router();
+const router = express.Router();
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -40,9 +40,9 @@ router.post("/register", async (req, res) => {
   }
 
   try {
-    const passwordStrength = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+    const passwordStrength = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d\s])[\S]{8,}$/;
     if (!passwordStrength.test(password)) {
-      return res.status(400).json({ message: "Password must contain at least one letter and one number." });
+      return res.status(400).json({ message: "Password must contain at least one letter, one number, and one special character." });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);

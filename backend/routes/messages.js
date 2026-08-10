@@ -9,11 +9,19 @@ const { auth } = require("../middleware/auth.js");
 
 // Pusher initialized inside a getter so env vars are always loaded first
 function getPusher() {
+  const { PUSHER_APP_ID, PUSHER_KEY, PUSHER_SECRET, PUSHER_CLUSTER } = process.env;
+  if (!PUSHER_APP_ID || !PUSHER_KEY || !PUSHER_SECRET || !PUSHER_CLUSTER) {
+    console.warn('Pusher is not fully configured. Skipping realtime triggers.');
+    return {
+      trigger: async () => {},
+    };
+  }
+
   return new Pusher({
-    appId:   process.env.PUSHER_APP_ID,
-    key:     process.env.PUSHER_KEY,
-    secret:  process.env.PUSHER_SECRET,
-    cluster: process.env.PUSHER_CLUSTER,
+    appId:   PUSHER_APP_ID,
+    key:     PUSHER_KEY,
+    secret:  PUSHER_SECRET,
+    cluster: PUSHER_CLUSTER,
     useTLS:  true,
   });
 }
@@ -44,7 +52,11 @@ router.get("/conversation/:userId", auth, async (req, res) => {
       { $addToSet: { readBy: myId } }
     );
 
-    getPusher().trigger(`user-${userId}`, "messages-read", { byUserId: myId });
+    try {
+      await getPusher().trigger(`user-${userId}`, "messages-read", { byUserId: myId });
+    } catch (triggerErr) {
+      console.warn('Failed to send messages-read trigger:', triggerErr.message);
+    }
 
     res.json(messages.reverse());
   } catch (err) {
@@ -140,8 +152,12 @@ router.post("/send", auth, async (req, res) => {
     ]);
 
     const pusher = getPusher();
-    pusher.trigger(`user-${receiverId}`,   "new-message", populated);
-    pusher.trigger(`user-${req.user.id}`,  "new-message", populated);
+    try {
+      await pusher.trigger(`user-${receiverId}`,   "new-message", populated);
+      await pusher.trigger(`user-${req.user.id}`,  "new-message", populated);
+    } catch (triggerErr) {
+      console.warn('Failed to send new-message trigger:', triggerErr.message);
+    }
 
     res.status(201).json(populated);
   } catch (err) {
@@ -173,7 +189,11 @@ router.post("/broadcast", auth, async (req, res) => {
 
     const populated = await message.populate("senderId", "username role");
 
-    getPusher().trigger("broadcast-channel", "new-broadcast", populated);
+    try {
+      await getPusher().trigger("broadcast-channel", "new-broadcast", populated);
+    } catch (triggerErr) {
+      console.warn('Failed to send broadcast trigger:', triggerErr.message);
+    }
 
     res.status(201).json(populated);
   } catch (err) {
@@ -193,12 +213,16 @@ router.post("/presence", auth, async (req, res) => {
       { upsert: true, new: true }
     );
 
-    getPusher().trigger("presence-channel", "presence-update", {
-      userId:   req.user.id,
-      username: user.username,
-      isOnline,
-      lastSeen: new Date(),
-    });
+    try {
+      await getPusher().trigger("presence-channel", "presence-update", {
+        userId:   req.user.id,
+        username: user.username,
+        isOnline,
+        lastSeen: new Date(),
+      });
+    } catch (triggerErr) {
+      console.warn('Failed to send presence trigger:', triggerErr.message);
+    }
 
     res.json({ success: true });
   } catch (err) {

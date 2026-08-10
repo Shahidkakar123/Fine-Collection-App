@@ -8,6 +8,24 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const useChatStore = defineStore('chat', () => {
   const authStore = useAuthStore();
+  
+  // Helpers: normalize ids and dedupe messages robustly
+  const normalizeId = (id) => {
+    if (id === null || id === undefined) return id;
+    if (typeof id === 'object') return id._id || String(id);
+    return String(id);
+  };
+
+  const dedupeById = (arr) => {
+    const seen = new Set();
+    return (arr || []).filter(m => {
+      const id = normalizeId(m._id);
+      if (!id) return true; // keep messages without id (rare)
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+  };
 
   // ── State ────────────────────────────────────────────────────────────────────
   const pusherClient     = ref(null);
@@ -64,17 +82,29 @@ export const useChatStore = defineStore('chat', () => {
 
     myChannel.bind('new-message', (msg) => {
       // Normalise IDs — populated objects vs raw strings
-      const senderId   = typeof msg.senderId   === 'object' ? msg.senderId._id   : msg.senderId;
-      const receiverId = typeof msg.receiverId  === 'object' ? msg.receiverId._id : msg.receiverId;
+      const senderId   = normalizeId(typeof msg.senderId === 'object' ? msg.senderId._id : msg.senderId);
+      const receiverId = normalizeId(typeof msg.receiverId === 'object' ? msg.receiverId._id : msg.receiverId);
+      msg._id = normalizeId(msg._id);
 
       // The "other person" in this conversation from MY perspective
       const otherId = senderId === myId ? receiverId : senderId;
 
       if (!conversations.value[otherId]) conversations.value[otherId] = [];
 
-      // Deduplicate
-      const exists = conversations.value[otherId].some(m => m._id === msg._id);
+      // Deduplicate by _id
+      const exists = conversations.value[otherId].some(m => normalizeId(m._id) === msg._id);
       if (exists) return;
+
+      // Also remove any optimistic entry that looks identical (same content + createdAt)
+      conversations.value[otherId] = conversations.value[otherId].filter(m => {
+        if (m._optimistic) {
+          const sameContent = (m.content || '').trim() === (msg.content || '').trim();
+          const mTime = m.createdAt ? new Date(m.createdAt).getTime() : 0;
+          const msgTime = msg.createdAt ? new Date(msg.createdAt).getTime() : 0;
+          if (sameContent && Math.abs(mTime - msgTime) < 3000) return false;
+        }
+        return true;
+      });
 
       // Add message — this updates the chat window instantly for BOTH sender and receiver
       conversations.value[otherId] = [...conversations.value[otherId], msg];
@@ -254,6 +284,9 @@ export const useChatStore = defineStore('chat', () => {
       conversations.value[receiverId] = conversations.value[receiverId].map(m =>
         m._optimistic ? res.data : m
       );
+
+      // Ensure we don't end up with duplicates (e.g., Pusher already pushed the server message)
+      conversations.value[receiverId] = dedupeById(conversations.value[receiverId]);
     } catch (err) {
       // Roll back optimistic message on failure
       conversations.value[receiverId] = conversations.value[receiverId].filter(m => !m._optimistic);
