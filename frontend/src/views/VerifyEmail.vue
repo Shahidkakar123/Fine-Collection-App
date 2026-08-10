@@ -22,7 +22,10 @@ import axios from 'axios';
 // const rawApiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 // const API_BASE_URL = rawApiUrl.endsWith('/api') ? rawApiUrl.slice(0, -4) : rawApiUrl;
 
+
+
 const route = useRoute();
+
 const loading = ref(true);
 const success = ref(false);
 const message = ref('Verifying your email...');
