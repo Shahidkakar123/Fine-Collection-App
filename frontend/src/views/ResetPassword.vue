@@ -83,8 +83,7 @@ const success = ref('');
 const loading = ref(false);
 const tokenInvalid = ref('');
 const resetToken = ref('');
-const rawApiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
-const API_BASE_URL = rawApiUrl.endsWith('/api') ? rawApiUrl.slice(0, -4) : rawApiUrl;
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 onMounted(() => {
   resetToken.value = route.params.token;

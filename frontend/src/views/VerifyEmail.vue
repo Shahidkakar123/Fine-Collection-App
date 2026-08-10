@@ -26,6 +26,8 @@ const route = useRoute();
 const loading = ref(true);
 const success = ref(false);
 const message = ref('Verifying your email...');
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
 
 
 onMounted(async () => {
