@@ -11,6 +11,8 @@ const { verifyEmailToken } = require("../utils/verification");
 
 require("dotenv").config({ path: require("path").join(__dirname, "../.env") });
 const PRINCIPAL_PD_USERNAME = "PD";
+const PASSWORD_STRENGTH_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d\s])[\S]{8,}$/;
+const PASSWORD_STRENGTH_MESSAGE = "Password must be at least 8 characters and contain letters, numbers, and special characters.";
 
 const isPrincipalPD = (user) => user?.username === PRINCIPAL_PD_USERNAME;
 
@@ -34,15 +36,14 @@ router.post("/register", async (req, res) => {
     return res.status(400).json({ message: passwordValidation.message });
   }
 
-  const emailValidation = await validateEmailAddress(email);
+  const emailValidation = await validateEmailAddress(email, { checkDomain: false });
   if (!emailValidation.valid) {
     return res.status(400).json({ message: emailValidation.message });
   }
 
   try {
-    const passwordStrength = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d\s])[\S]{8,}$/;
-    if (!passwordStrength.test(password)) {
-      return res.status(400).json({ message: "Password must contain at least one letter, one number, and one special character." });
+    if (!PASSWORD_STRENGTH_REGEX.test(password)) {
+      return res.status(400).json({ message: PASSWORD_STRENGTH_MESSAGE });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -65,7 +66,7 @@ router.post("/register", async (req, res) => {
     await user.save();
 
     // Send verification email. Set FRONTEND_URL in .env if your app runs on a different port.
-    const verifyLink = `${process.env.FRONTEND_URL || "http://localhost:5174"}/verify-email/${emailVerificationTokenRaw}`;
+    const verifyLink = `${process.env.FRONTEND_URL || "http://localhost:5173"}/verify-email/${emailVerificationTokenRaw}`;
     const emailSubject = "Verify Your Email - FineMate";
     const emailBody = `
       <h2>Welcome to FineMate!</h2>
@@ -89,14 +90,20 @@ router.post("/register", async (req, res) => {
 
 // LOGIN - Authenticate user and return JWT
 router.post("/login", async (req, res) => {
-  const { username, password } = req.body;
+  const email = normalizeEmail(req.body.email || req.body.username);
+  const password = req.body.password;
 
-  if (!username || !password) {
-    return res.status(400).json({ message: "Username and password are required" });
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
+
+  const emailValidation = await validateEmailAddress(email, { checkDomain: false });
+  if (!emailValidation.valid) {
+    return res.status(400).json({ message: "Please enter a valid email address" });
   }
 
   try {
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ email: emailValidation.normalized });
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -152,6 +159,10 @@ router.post("/refresh-token", auth, async (req, res) => {
       return res.status(403).json({ message: "Your account has been deactivated" });
     }
 
+    if (!user.emailVerified) {
+      return res.status(403).json({ message: "Please verify your email before continuing." });
+    }
+
     // Create a new token with the current role from the database
     const newToken = jwt.sign({ id: user._id, role: user.role, username: user.username }, process.env.JWT_SECRET, { expiresIn: "8h" });
 
@@ -168,10 +179,13 @@ router.post("/refresh-token", auth, async (req, res) => {
   }
 });
 
-// GET all users - PD only, for employee selection when creating fines
+// GET all verified users - PD only
 router.get("/", [auth, checkRole("pd")], async (req, res) => {
   try {
-    const users = await User.find({}, { username: 1, email: 1, role: 1, _id: 1, isActive: 1 });
+    const users = await User.find(
+      { emailVerified: true },
+      { username: 1, email: 1, role: 1, _id: 1, isActive: 1 },
+    );
     res.json(users);
   } catch (err) {
     res.status(500).json({ message: "Error fetching users: " + err.message });
@@ -182,7 +196,7 @@ router.get("/", [auth, checkRole("pd")], async (req, res) => {
 router.get("/search/:username", [auth, checkRole("pd")], async (req, res) => {
   const { username } = req.params;
   try {
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ username, emailVerified: true });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -231,6 +245,10 @@ router.put("/promote/:username", [auth, checkRole("pd")], async (req, res) => {
 
     if (!user.isActive) {
       return res.status(400).json({ message: `User "${username}" must be active before they can become Acting Project Director` });
+    }
+
+    if (!user.emailVerified) {
+      return res.status(400).json({ message: `User "${username}" must verify their email before they can become Acting Project Director` });
     }
 
     if (user.role === "pd") {
@@ -336,7 +354,7 @@ router.put("/demote/:username", [auth, checkRole("pd")], async (req, res) => {
 
 // FORGOT PASSWORD - Generate reset token and send email
 router.post("/forgot-password", async (req, res) => {
-  const { email } = req.body;
+  const email = normalizeEmail(req.body.email);
 
   if (!email) {
     return res.status(400).json({ message: "Email is required" });
@@ -346,7 +364,7 @@ router.post("/forgot-password", async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) {
       // Don't reveal if email exists or not (security best practice)
-      return res.json({ message: "✓ If email exists, a reset link has been sent" });
+      return res.json({ message: "If email exists, a reset link has been sent" });
     }
 
     // Generate reset token
@@ -376,7 +394,7 @@ router.post("/forgot-password", async (req, res) => {
 
     await sendEmail(user.email, emailSubject, emailBody);
 
-    res.json({ message: "✓ If email exists, a reset link has been sent" });
+    res.json({ message: "If email exists, a reset link has been sent" });
   } catch (err) {
     res.status(500).json({ message: "Error processing forgot password: " + err.message });
   }
@@ -390,8 +408,8 @@ router.post("/reset-password", async (req, res) => {
     return res.status(400).json({ message: "Token and new password are required" });
   }
 
-  if (newPassword.length < 6) {
-    return res.status(400).json({ message: "Password must be at least 6 characters" });
+  if (!PASSWORD_STRENGTH_REGEX.test(newPassword)) {
+    return res.status(400).json({ message: PASSWORD_STRENGTH_MESSAGE });
   }
 
   try {
@@ -414,6 +432,9 @@ router.post("/reset-password", async (req, res) => {
     user.password = hashedPassword;
     user.resetPasswordToken = null;
     user.resetPasswordExpiry = null;
+    user.emailVerified = true;
+    user.emailVerificationToken = null;
+    user.emailVerificationExpiry = null;
     await user.save();
 
     // Send confirmation email
@@ -497,6 +518,10 @@ router.put("/reactivate/:id", [auth, checkRole("pd")], async (req, res) => {
       return res.status(400).json({ message: "This employee is already active" });
     }
 
+    if (!user.emailVerified) {
+      return res.status(400).json({ message: "This employee must verify their email before being re-added" });
+    }
+
     // Get user info before reactivation
     const username = user.username;
     const userEmail = user.email;
@@ -562,8 +587,8 @@ router.delete("/permanent/:id", [auth, checkRole("pd")], async (req, res) => {
 router.get("/active/list", auth, async (req, res) => {
   try {
     const activeEmployees = await User.find(
-      { isActive: true, role: { $ne: "pd" } }, // Active users who are not PD
-      { username: 1, email: 1, _id: 1, role: 1 },
+      { isActive: true, emailVerified: true, role: { $ne: "pd" } }, // Active, verified users who are not PD
+      { username: 1, email: 1, _id: 1, role: 1, emailVerified: 1 },
     );
     res.json(activeEmployees);
   } catch (err) {

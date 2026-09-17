@@ -1,10 +1,10 @@
 <template>
-  <div class="min-h-screen bg-gray-100 py-8">
-    <div class="container mx-auto px-4 max-w-6xl">
+  <div class="min-h-screen bg-gray-50 py-8">
+    <div class="container mx-auto px-4 max-w-5xl">
       <!-- Header Section -->
       <div class="mb-8">
-        <h2 class="text-4xl font-bold text-gray-900 mb-2">Your Fines Timeline</h2>
-        <p class="text-gray-600">View all your assigned fines in chronological order</p>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Your Fines Timeline</h2>
+        <p class="text-sm text-gray-600">View all your assigned fines in chronological order</p>
       </div>
 
       <!-- Loading State -->
@@ -15,7 +15,7 @@
       <!-- New Fines Alert -->
       <div v-if="newFinesDetected.length > 0" class="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
         <div class="flex items-start">
-          <div class="flex-shrink-0">
+          <div class="flex-shrink-5">
             <span class="text-2xl">⚠️</span>
           </div>
           <div class="ml-3">
@@ -33,7 +33,7 @@
       <div v-else-if="!finesStore.loading" class="space-y-6">
         <!-- Summary Stats (First) -->
         <div v-if="userFines.length > 0" class="bg-white rounded-lg shadow-md p-6">
-          <h3 class="text-lg font-bold text-gray-900 mb-4">Your Summary</h3>
+          <h3 class="text-md font-bold text-gray-900 mb-4">Your Summary</h3>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-400">
               <p class="text-xs text-blue-600 font-semibold uppercase">Total Fines</p>

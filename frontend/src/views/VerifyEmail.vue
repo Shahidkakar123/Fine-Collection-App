@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-md mx-auto bg-white shadow-md rounded p-6 mt-12">
+  <div class="max-w-md mx-auto bg-white shadow-lg rounded p-6 mt-12">
     <h2 class="text-2xl font-bold mb-4 text-gray-900">Email Verification</h2>
     <div v-if="loading" class="text-gray-700">Verifying your email...</div>
     <div v-else-if="success" class="p-3 bg-green-100 border border-green-400 text-green-800 rounded">
@@ -19,19 +19,12 @@ import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 
-// const rawApiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
-// const API_BASE_URL = rawApiUrl.endsWith('/api') ? rawApiUrl.slice(0, -4) : rawApiUrl;
-
-
-
 const route = useRoute();
 
 const loading = ref(true);
 const success = ref(false);
 const message = ref('Verifying your email...');
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
-
-
 
 onMounted(async () => {
   try {

@@ -7,6 +7,8 @@ const Presence = require("../models/Presence.js");
 const User = require("../models/User.js");
 const { auth } = require("../middleware/auth.js");
 
+const visibleUserFilter = { isActive: true, emailVerified: true };
+
 // Pusher initialized inside a getter so env vars are always loaded first
 function getPusher() {
   const { PUSHER_APP_ID, PUSHER_KEY, PUSHER_SECRET, PUSHER_CLUSTER } = process.env;
@@ -33,6 +35,15 @@ router.get("/conversation/:userId", auth, async (req, res) => {
     const myId = req.user.id;
     const page = parseInt(req.query.page) || 1;
     const limit = 50;
+    const otherUser = await User.findOne({ _id: userId, ...visibleUserFilter }).select("role");
+
+    if (!otherUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (req.user.role === "employee" && otherUser.role !== "pd") {
+      return res.status(403).json({ message: "Employees can only message the Project Director" });
+    }
 
     const messages = await Message.find({
       isBroadcast: false,
@@ -44,8 +55,8 @@ router.get("/conversation/:userId", auth, async (req, res) => {
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
-      .populate("senderId",   "username role")
-      .populate("receiverId", "username role");
+      .populate("senderId", "username role emailVerified isActive")
+      .populate("receiverId", "username role emailVerified isActive");
 
     await Message.updateMany(
       { senderId: userId, receiverId: myId, readBy: { $ne: myId } },
@@ -58,7 +69,12 @@ router.get("/conversation/:userId", auth, async (req, res) => {
       console.warn('Failed to send messages-read trigger:', triggerErr.message);
     }
 
-    res.json(messages.reverse());
+    res.json(messages.reverse().filter((message) => (
+      message.senderId?.emailVerified !== false &&
+      message.receiverId?.emailVerified !== false &&
+      message.senderId?.isActive !== false &&
+      message.receiverId?.isActive !== false
+    )));
   } catch (err) {
     res.status(500).json({ message: "Error fetching messages: " + err.message });
   }
@@ -75,14 +91,17 @@ router.get("/broadcasts", auth, async (req, res) => {
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
-      .populate("senderId", "username role");
+      .populate("senderId", "username role emailVerified isActive");
 
     await Message.updateMany(
       { isBroadcast: true, readBy: { $ne: myId } },
       { $addToSet: { readBy: myId } }
     );
 
-    res.json(messages.reverse());
+    res.json(messages.reverse().filter((message) => (
+      message.senderId?.emailVerified !== false &&
+      message.senderId?.isActive !== false
+    )));
   } catch (err) {
     res.status(500).json({ message: "Error fetching broadcasts: " + err.message });
   }
@@ -93,6 +112,10 @@ router.get("/unread", auth, async (req, res) => {
   try {
     const myId      = req.user.id;
     const ObjectId  = mongoose.Types.ObjectId; // FIX 1: reference only, use with `new` below
+    const visibleUserObjectIds = await User.find(visibleUserFilter).distinct("_id");
+    const visibleUserIds = new Set(
+      visibleUserObjectIds.map((id) => id.toString())
+    );
 
     const directUnread = await Message.aggregate([
       {
@@ -107,12 +130,16 @@ router.get("/unread", auth, async (req, res) => {
 
     const broadcastUnread = await Message.countDocuments({
       isBroadcast: true,
+      senderId: { $in: visibleUserObjectIds },
       readBy:      { $ne: new ObjectId(myId) },
     });
 
     const unreadMap = {};
     directUnread.forEach((item) => {
-      unreadMap[item._id.toString()] = item.count;
+      const senderId = item._id.toString();
+      if (visibleUserIds.has(senderId)) {
+        unreadMap[senderId] = item.count;
+      }
     });
 
     res.json({ direct: unreadMap, broadcast: broadcastUnread });
@@ -128,8 +155,9 @@ router.post("/send", auth, async (req, res) => {
     if (!content?.trim()) return res.status(400).json({ message: "Message cannot be empty" });
     if (!receiverId)       return res.status(400).json({ message: "Receiver is required" });
 
-    const sender   = await User.findById(req.user.id).select("username role");
-    const receiver = await User.findById(receiverId);
+    const sender = await User.findOne({ _id: req.user.id, ...visibleUserFilter }).select("username role");
+    const receiver = await User.findOne({ _id: receiverId, ...visibleUserFilter });
+    if (!sender) return res.status(403).json({ message: "Please verify your email before using chat" });
     if (!receiver) return res.status(404).json({ message: "Receiver not found" });
 
     if (sender.role === "employee" && receiver.role !== "pd") {
@@ -147,7 +175,7 @@ router.post("/send", auth, async (req, res) => {
     await message.save();
 
     const populated = await message.populate([
-      { path: "senderId",   select: "username role" },
+      { path: "senderId", select: "username role" },
       { path: "receiverId", select: "username role" },
     ]);
 
@@ -172,7 +200,7 @@ router.post("/broadcast", auth, async (req, res) => {
 
     if (!content?.trim()) return res.status(400).json({ message: "Message cannot be empty" });
 
-    const sender = await User.findById(req.user.id).select("username role");
+    const sender = await User.findOne({ _id: req.user.id, ...visibleUserFilter }).select("username role");
     if (!sender || sender.role !== "pd") {
       return res.status(403).json({ message: "Only the Project Director can broadcast." });
     }
@@ -205,7 +233,8 @@ router.post("/broadcast", auth, async (req, res) => {
 router.post("/presence", auth, async (req, res) => {
   try {
     const { isOnline } = req.body;
-    const user = await User.findById(req.user.id).select("username");
+    const user = await User.findOne({ _id: req.user.id, ...visibleUserFilter }).select("username");
+    if (!user) return res.status(403).json({ message: "Please verify your email before using chat" });
 
     await Presence.findOneAndUpdate(
       { userId: req.user.id },
@@ -233,7 +262,8 @@ router.post("/presence", auth, async (req, res) => {
 // ── GET all presence statuses ──────────────────────────────────────────────────
 router.get("/presence", auth, async (req, res) => {
   try {
-    const presences = await Presence.find({});
+    const visibleUserIds = await User.find(visibleUserFilter).distinct("_id");
+    const presences = await Presence.find({ userId: { $in: visibleUserIds } });
     res.json(presences);
   } catch (err) {
     res.status(500).json({ message: "Error fetching presence: " + err.message });
@@ -246,9 +276,9 @@ router.get("/users", auth, async (req, res) => {
     const myId = req.user.id;
     let users;
     if (req.user.role === "pd") {
-      users = await User.find({ isActive: true, _id: { $ne: myId } }, "username role _id");
+      users = await User.find({ ...visibleUserFilter, _id: { $ne: myId } }, "username role emailVerified _id");
     } else {
-      users = await User.find({ role: "pd", isActive: true, _id: { $ne: myId } }, "username role _id");
+      users = await User.find({ ...visibleUserFilter, role: "pd", _id: { $ne: myId } }, "username role emailVerified _id");
     }
     res.json(users);
   } catch (err) {

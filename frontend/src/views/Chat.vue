@@ -309,6 +309,24 @@ const inputText  = ref('');
 const sending    = ref(false);
 const messageContainer = ref(null);
 const inputRef   = ref(null);
+let userListRefreshTimer = null;
+
+const startUserListPolling = () => {
+  if (userListRefreshTimer) return;
+
+  userListRefreshTimer = setInterval(async () => {
+    if (document.visibilityState === 'visible' && authStore.token) {
+      await chatStore.loadUsers();
+    }
+  }, 5000);
+};
+
+const stopUserListPolling = () => {
+  if (userListRefreshTimer) {
+    clearInterval(userListRefreshTimer);
+    userListRefreshTimer = null;
+  }
+};
 
 onMounted(async () => {
   console.log('Initializing chat...',authStore);
@@ -320,9 +338,11 @@ onMounted(async () => {
   await chatStore.loadUnread();
   await chatStore.openFirstUnread();
   await chatStore.setOnline(true);
+  startUserListPolling();
 });
 
 onUnmounted(async () => {
+  stopUserListPolling();
   await chatStore.setOnline(false);
   chatStore.disconnectPusher();
 });

@@ -3,7 +3,8 @@
     <div class="container mx-auto px-4 py-4">
       <div class="flex justify-between items-center">
         <router-link to="/" class="flex items-center">
-          <h1 class="text-2xl font-bold text-primary">FineMate</h1>
+          <h1 class="text-2xl font-bold text-primary "><span class=" falling-letter inline-block">F</span>ineMate</h1>
+          <!-- <span class="falling-letter inline-block">F</span>ineMate -->
         </router-link>
 
         <div class="flex items-center space-x-8">
@@ -67,7 +68,8 @@
               class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-10">
               <div class="px-4 py-2 border-b border-gray-200">
                 <p class="text-xs text-gray-500 uppercase tracking-wider">Account</p>
-                <p class="font-semibold text-gray-900 mt-1 truncate max-w-[200px]" :title="authStore.user?.username">Name: <span class="text-primary">{{ authStore?.user?.username }}</span>
+                <p class="font-semibold text-gray-900 mt-1 truncate max-w-[200px]" :title="authStore.user?.username">
+                  Name: <span class="text-primary">{{ authStore?.user?.username }}</span>
                 </p>
 
                 <p class="font-semibold text-gray-900 mt-1">Role: <span class="text-primary">{{ authStore.role }}</span>
@@ -196,3 +198,57 @@ if (typeof window !== 'undefined') {
   });
 }
 </script>
+/* Scoped style block */
+<style scoped>
+.falling-letter {
+  display: inline-block;
+  position: relative;
+  vertical-align: baseline;
+  line-height: 1;
+  animation: premiumDrop 3s cubic-bezier(0.2, 0.9, 0.2, 1) infinite;
+  transform-origin: left bottom;
+  perspective: 900px;
+  will-change: transform, opacity;
+}
+
+@keyframes premiumDrop {
+  0% {
+    transform: translate3d(0, -12px, 0) rotateZ(0deg) rotateY(0deg);
+    opacity: 0.8;
+  }
+
+  18% {
+    transform: translate3d(0, -2px, 0) rotateZ(0deg) rotateY(0deg);
+    opacity: 1;
+  }
+
+  32% {
+    transform: translate3d(0, 1px, 0) rotateZ(0deg) rotateY(0deg);
+  }
+
+  44% {
+    transform: translate3d(0, 0, 0) rotateZ(-18deg) rotateY(-6deg);
+  }
+
+  52% {
+    transform: translate3d(0, -3px, 0) rotateZ(-30deg) rotateY(-10deg);
+  }
+
+  62% {
+    transform: translate3d(0, 2px, 0) rotateZ(-10deg) rotateY(-3deg);
+  }
+
+  72% {
+    transform: translate3d(0, -2px, 0) rotateZ(10deg) rotateY(4deg);
+  }
+
+  86% {
+    transform: translate3d(0, 0, 0) rotateZ(-4deg) rotateY(-1deg);
+  }
+
+  100% {
+    transform: translate3d(0, 0, 0) rotateZ(0deg) rotateY(0deg);
+    opacity: 1;
+  }
+}
+</style>

@@ -160,11 +160,28 @@ export const useChatStore = defineStore('chat', () => {
       const res = await axios.get(`${API_BASE_URL}/api/messages/users`, {
         headers: { Authorization: `Bearer ${authStore.token}` },
       });
-      users.value = res.data;
+      users.value = res.data.filter(user => user.emailVerified !== false);
       pruneUnreadDirectToVisibleUsers();
     } catch (err) {
       console.error('Failed to load users:', err);
     }
+  }
+
+  if (typeof window !== 'undefined') {
+    const refreshUsersIfVisible = () => {
+      if (authStore.token) {
+        loadUsers();
+      }
+    };
+
+    const handleStorageRefresh = (event) => {
+      if (event.key === 'user-list-refresh') {
+        refreshUsersIfVisible();
+      }
+    };
+
+    window.addEventListener('user-list-refresh', refreshUsersIfVisible);
+    window.addEventListener('storage', handleStorageRefresh);
   }
 
   async function loadPresence() {

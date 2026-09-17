@@ -34,7 +34,7 @@ app.use(async (req, res, next) => {
     next();
   } catch (err) {
     console.error("✗ DB connection failed:", err.message);
-    res.status(500).json({ message: "Database connection failed" });
+    res.status(500).json({ message: "You appear to be offline. Please check your internet connection and try again." });
   }
 });
 

@@ -1,10 +1,10 @@
 <template>
-  <div class="min-h-screen bg-gray-100 py-8">
+  <div class="min-h-screen bg-gray-50 py-8">
     <div class="container mx-auto px-4 max-w-6xl">
       <!-- Header -->
       <div class="mb-8">
-        <h2 class="text-4xl font-bold text-gray-900 mb-2">Manage Fines</h2>
-        <p class="text-gray-600">Add, update, and manage fines</p>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Manage Fines</h2>
+        <p class=" text-sm text-gray-600">Add, update, and manage fines</p>
       </div>
 
       <!-- Alert for non-PD users -->
@@ -14,8 +14,11 @@
       </div>
 
       <!-- Loading state -->
-      <div v-if="finesStore.loading" class="text-center py-12">
-        <p class="text-gray-600">Loading fines...</p>
+      <div v-if="finesStore.loading" class="flex justify-center py-12">
+        <svg class="w-8 h-8 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+        </svg>
       </div>
 
       <!-- Main Content -->
@@ -50,11 +53,12 @@
                     <button v-for="employee in filteredEmployees" :key="employee._id" type="button"
                       class="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm"
                       @mousedown.prevent="selectEmployee(employee)">
-                      {{ employee.username }} ({{ employee.role }})
+                      {{ employee.username }} 
+                      <!-- ({{ employee.role }}) -->
                     </button>
                   </div>
                 </div>
-                <p v-if="employees.length === 0" class="text-xs text-gray-500 mt-1">Loading employees...</p>
+                <p v-if="employees.length === 0" class="text-xs text-gray-500 mt-1">Employees yet to register...</p>
                 <p v-else-if="employeeSearch && filteredEmployees.length === 0" class="text-xs text-gray-500 mt-1">No
                   employee found.</p>
               </div>
@@ -73,7 +77,7 @@
               </div>
 
               <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Fine Value (Rs ) *</label>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Value (Rs) *</label>
                 <input v-model.number="newFine.value" type="number" step="0.01" min="0" max="999999"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 transition"
                   placeholder="0.00" required @input="limitFineAmount" />
@@ -89,7 +93,7 @@
               </div>
 
               <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Fine Date</label>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Date</label>
                 <input v-model="newFine.date" type="date"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 transition" />
               </div>
@@ -107,9 +111,13 @@
 
             <div class="flex gap-4">
               <button type="submit"
-                class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-300 font-semibold"
+                class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-300 font-semibold disabled:opacity-70 disabled:cursor-not-allowed min-w-[96px] inline-flex items-center justify-center"
                 :disabled="submitting">
-                {{ submitting ? 'Submitting...' : 'Add Fine' }}
+                <svg v-if="submitting" class="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                </svg>
+                <span v-else>Add Fine</span>
               </button>
               <button type="reset" @click="resetForm"
                 class="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition duration-300 font-semibold">
@@ -148,7 +156,7 @@
           </div>
 
           <div v-if="finesStore.fines.length === 0" class="text-center py-8">
-            <p class="text-gray-500">No fines created yet. Add one to get started.</p>
+            <p class="text-gray-500">No fines created yet.</p>
           </div>
 
           <div v-else-if="filteredFines.length === 0" class="text-center py-8">
@@ -486,6 +494,25 @@ const isOtherCategory = computed(() => {
   return newFine.value.category?.trim().toLowerCase() === 'other';
 });
 
+let employeeListRefreshTimer = null;
+
+const startEmployeeListPolling = () => {
+  if (employeeListRefreshTimer || !isPD.value) return;
+
+  employeeListRefreshTimer = setInterval(() => {
+    if (document.visibilityState === 'visible' && isPD.value && authStore.token) {
+      loadEmployees();
+    }
+  }, 5000);
+};
+
+const stopEmployeeListPolling = () => {
+  if (employeeListRefreshTimer) {
+    clearInterval(employeeListRefreshTimer);
+    employeeListRefreshTimer = null;
+  }
+};
+
 const fineUserId = (fine) => {
   if (!fine?.userId) return '';
   return typeof fine.userId === 'object' ? fine.userId._id : fine.userId;
@@ -498,6 +525,8 @@ const canManageFine = (fine) => {
 };
 
 onMounted(async () => {
+  startEmployeeListPolling();
+
   // Redirect non-PD users to dashboard
   if (!isPD.value) {
     notificationStore.error('Only Project Directors can manage fines', 2000);
@@ -509,6 +538,10 @@ onMounted(async () => {
     await loadPreviousFineCycles();
     await loadEmployees();
   }
+
+  onBeforeUnmount(() => {
+    stopEmployeeListPolling();
+  });
 });
 
 const loadEmployees = async () => {

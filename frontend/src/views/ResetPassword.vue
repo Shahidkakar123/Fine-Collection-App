@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-md mx-auto bg-gray-100 shadow-md rounded p-6 mt-12">
+  <div class="max-w-md mx-auto bg-gray-50 shadow-lg rounded p-6 mt-12">
     <h2 class="text-2xl font-bold mb-4 text-gray-900">Reset Password</h2>
     
     <!-- Invalid Token -->
@@ -26,25 +26,63 @@
     <form @submit.prevent="submitForm" class="space-y-4" v-if="!success && !tokenInvalid">
       <div>
         <label class="block text-gray-800 font-medium mb-2">New Password</label>
-        <input
-          v-model="form.newPassword"
-          type="password"
-          placeholder="Min 6 characters"
-          class="w-full border border-gray-300 rounded-lg p-2 bg-white text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent transition duration-200"
-          required
-        />
-        <p class="text-xs text-gray-600 mt-1">Must be at least 6 characters</p>
+        <div class="relative">
+          <input
+            v-model="form.newPassword"
+            :type="showNewPassword ? 'text' : 'password'"
+            placeholder="Min 8 characters"
+            class="w-full border border-gray-300 rounded-lg p-2 pr-11 bg-white text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent transition duration-200"
+            required
+          />
+          <button
+            type="button"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+            aria-label="Toggle password visibility"
+            @click="togglePasswordVisibility('new')"
+          >
+            <svg v-if="!showNewPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.036 12.322a1.012 1.012 0 010-.628C3.423 7.53 7.36 4.5 12 4.5c4.64 0 8.577 3.03 9.964 7.194a1.012 1.012 0 010 .628C20.577 16.47 16.64 19.5 12 19.5c-4.64 0-8.577-3.03-9.964-7.178z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3l18 18"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.56 10.56A2 2 0 0113.44 13.44"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.88 5.08A10.94 10.94 0 0112 5c5.38 0 10 7 10 7a15.76 15.76 0 01-4.59 5.52"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6.61 6.61A15.6 15.6 0 002 12s3.5 7 10 7a9.86 9.86 0 005.39-1.61"/>
+            </svg>
+          </button>
+        </div>
+        <p class="text-xs text-gray-600 mt-1">At least one letter, one number, and one special character</p>
       </div>
 
       <div>
         <label class="block text-gray-800 font-medium mb-2">Confirm Password</label>
-        <input
-          v-model="form.confirmPassword"
-          type="password"
-          placeholder="Re-enter your password"
-          class="w-full border border-gray-300 rounded-lg p-2 bg-white text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent transition duration-200"
-          required
-        />
+        <div class="relative">
+          <input
+            v-model="form.confirmPassword"
+            :type="showConfirmPassword ? 'text' : 'password'"
+            placeholder="Re-enter your password"
+            class="w-full border border-gray-300 rounded-lg p-2 pr-11 bg-white text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent transition duration-200"
+            required
+          />
+          <button
+            type="button"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+            aria-label="Toggle password visibility"
+            @click="togglePasswordVisibility('confirm')"
+          >
+            <svg v-if="!showConfirmPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.036 12.322a1.012 1.012 0 010-.628C3.423 7.53 7.36 4.5 12 4.5c4.64 0 8.577 3.03 9.964 7.194a1.012 1.012 0 010 .628C20.577 16.47 16.64 19.5 12 19.5c-4.64 0-8.577-3.03-9.964-7.178z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3l18 18"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.56 10.56A2 2 0 0113.44 13.44"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.88 5.08A10.94 10.94 0 0112 5c5.38 0 10 7 10 7a15.76 15.76 0 01-4.59 5.52"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6.61 6.61A15.6 15.6 0 002 12s3.5 7 10 7a9.86 9.86 0 005.39-1.61"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
       <button
@@ -78,12 +116,24 @@ import axios from 'axios';
 const router = useRouter();
 const route = useRoute();
 const form = ref({ newPassword: '', confirmPassword: '' });
+const showNewPassword = ref(false);
+const showConfirmPassword = ref(false);
+// Same rule used by Register.vue: 8+ non-space chars with a letter, number, and special character.
+const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d\s])[\S]{8,}$/;
 const error = ref('');
 const success = ref('');
 const loading = ref(false);
 const tokenInvalid = ref('');
 const resetToken = ref('');
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
+const togglePasswordVisibility = (field) => {
+  if (field === 'new') {
+    showNewPassword.value = !showNewPassword.value;
+  } else if (field === 'confirm') {
+    showConfirmPassword.value = !showConfirmPassword.value;
+  }
+};
 
 onMounted(() => {
   resetToken.value = route.params.token;
@@ -96,8 +146,8 @@ const submitForm = async () => {
   error.value = '';
   success.value = '';
 
-  if (form.value.newPassword.length < 6) {
-    error.value = 'Password must be at least 6 characters';
+  if (!passwordRegex.test(form.value.newPassword)) {
+    error.value = 'Password must be at least 8 characters and contain both letters , numbers and special characters';
     return;
   }
 

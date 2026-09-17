@@ -17,6 +17,11 @@ const ACTIVE_CYCLE_QUERY = {
     { cycleClosedAt: { $exists: false } },
   ],
 };
+const belongsToVerifiedUser = (item) => item.userId?.emailVerified === true;
+const isFineForVerifiedUser = async (item) => {
+  if (!item?.userId) return false;
+  return Boolean(await User.exists({ _id: item.userId, emailVerified: true }));
+};
 
 function getPusher() {
   return new Pusher({
@@ -45,8 +50,8 @@ const isPrincipalPD = async (user) => {
 // GET all fines - shared dashboard view for all authenticated users
 router.get('/', auth, async (req, res) => {
   try {
-    const items = await Item.find(ACTIVE_CYCLE_QUERY).populate('userId', 'username');
-    res.json(items);
+    const items = await Item.find(ACTIVE_CYCLE_QUERY).populate('userId', 'username emailVerified');
+    res.json(req.user.role === 'pd' ? items.filter(belongsToVerifiedUser) : items);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -56,11 +61,11 @@ router.get('/', auth, async (req, res) => {
 router.get('/previous-cycles', [auth, checkRole('pd')], async (req, res) => {
   try {
     const closedFines = await Item.find({ cycleClosedAt: { $ne: null } })
-      .populate('userId', 'username')
+      .populate('userId', 'username emailVerified')
       .populate('cycleClosedBy', 'username')
       .sort({ cycleClosedAt: -1, date: -1 });
 
-    const cyclesByDate = closedFines.reduce((cycles, fine) => {
+    const cyclesByDate = closedFines.filter(belongsToVerifiedUser).reduce((cycles, fine) => {
       const dateKey = fine.cycleClosedAt.toISOString().split('T')[0];
 
       if (!cycles[dateKey]) {
@@ -94,12 +99,15 @@ router.get('/previous-cycles', [auth, checkRole('pd')], async (req, res) => {
 // GET single fine by ID
 router.get(OBJECT_ID_ROUTE, auth, async (req, res) => {
   try {
-    const item = await Item.findById(req.params.id).populate('userId', 'username');
+    const item = await Item.findById(req.params.id).populate('userId', 'username emailVerified');
     if (!item) return res.status(404).json({ message: 'Fine not found' });
     if (item.cycleClosedAt) return res.status(404).json({ message: 'Fine not found in current cycle' });
+    if (req.user.role === 'pd' && !belongsToVerifiedUser(item)) {
+      return res.status(404).json({ message: 'Fine not found' });
+    }
 
     // Check authorization: PD can view any, employees only their own
-    if (req.user.role !== 'pd' && item.userId._id.toString() !== req.user.id) {
+    if (req.user.role !== 'pd' && item.userId?._id.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Unauthorized to view this fine' });
     }
 
@@ -133,6 +141,10 @@ router.post('/', [auth, checkRole('pd')], async (req, res) => {
 
     if (!employee.isActive) {
       return res.status(400).json({ message: 'Cannot create a fine for a removed employee' });
+    }
+
+    if (!employee.emailVerified) {
+      return res.status(400).json({ message: 'Cannot create a fine until the employee verifies their email' });
     }
 
     if (employee.role === 'pd') {
@@ -188,6 +200,7 @@ router.put(OBJECT_ID_ROUTE, [auth, checkRole('pd')], async (req, res) => {
     const item = await Item.findById(req.params.id);
     if (!item) return res.status(404).json({ message: 'Fine not found' });
     if (item.cycleClosedAt) return res.status(400).json({ message: 'Previous cycle fines cannot be edited' });
+    if (!(await isFineForVerifiedUser(item))) return res.status(404).json({ message: 'Fine not found' });
 
     if (await isActingPDUpdatingOwnFine(req, item)) {
       return res.status(403).json({ message: 'Acting Project Directors cannot edit their own fines' });
@@ -296,6 +309,7 @@ router.delete(OBJECT_ID_ROUTE, [auth, checkRole('pd')], async (req, res) => {
     const item = await Item.findById(req.params.id);
     if (!item) return res.status(404).json({ message: 'Fine not found' });
     if (item.cycleClosedAt) return res.status(400).json({ message: 'Previous cycle fines cannot be deleted' });
+    if (!(await isFineForVerifiedUser(item))) return res.status(404).json({ message: 'Fine not found' });
 
     if (await isActingPDUpdatingOwnFine(req, item)) {
       return res.status(403).json({ message: 'Acting Project Directors cannot delete their own fines' });
