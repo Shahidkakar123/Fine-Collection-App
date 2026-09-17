@@ -1,16 +1,16 @@
 <template>
-  <div class="min-h-screen bg-gray-100 py-8">
+  <div class="min-h-screen bg-gray-50 py-8">
     <div class="container mx-auto px-4 max-w-6xl">
       <div class="mb-8">
         <h2 class="text-2xl font-bold text-gray-900 mb-2">
           Fines Overview
         </h2>
-        <p class="text-xxl text-gray-600">
-          {{ authStore.role === 'pd' ? 'Manage all employee fines and analytics' : 'View fines and analytics' }}
+        <p class="text-xxl text-gray-700">
+          {{ 'View fines and analytics' }}
         </p>
       </div>
 
-      <div v-if="authStore.role !== 'pd' && newFinesDetected.length > 0"
+      <!-- <div v-if="authStore.role !== 'pd' && newFinesDetected.length > 0"
         class="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
         <div class="flex items-start">
           <div class="flex-shrink-0">
@@ -26,7 +26,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
 
       <div v-if="finesStore.loading" class="space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -40,15 +40,15 @@
         <h1 class="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider">Current Cycle Analytics</h1>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-primary">
-            <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Total Fines</h3>
+          <div class="bg-violet-100 rounded-lg shadow-lg p-6 border-l-4 border-ternary-700">
+            <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Total Fines</h3>
             <p class="text-3xl font-bold text-gray-900 mt-2">{{ finesStore.fines.length }}</p>
             <p class="text-xs text-gray-500 mt-1">System wide
             </p>
           </div>
 
-          <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
-            <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+          <div class="bg-blue-100 rounded-lg shadow-lg p-6 border-l-4 border-ternary-700">
+            <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">
               Active Users
             </h3>
             <p class="text-3xl font-bold text-gray-900 mt-2">{{ dashboardActiveEmployeeCount }}</p>
@@ -59,7 +59,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
           <div
-            class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg shadow-md p-6 border-l-4 border-emerald-600">
+            class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg shadow-lg p-6 border-l-4 border-emerald-700">
             <h3 class="text-xs font-semibold text-emerald-700 uppercase tracking-wide whitespace-nowrap">Collected
               Amount
             </h3>
@@ -68,8 +68,8 @@
             <p class="text-xs text-gray-500 mt-1">Amount from paid fines</p>
           </div>
 
-          <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
-            <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">Pending Amount
+          <div class="bg-yellow-100 rounded-lg shadow-lg p-6 border-l-4 border-yellow-600">
+            <h3 class="text-sm font-semibold text-yellow-700 uppercase tracking-wide whitespace-nowrap">Pending Amount
             </h3>
             <p :class="'font-bold text-gray-900 mt-2 whitespace-nowrap overflow-hidden text-ellipsis'">
               Rs {{ dashboardPendingAmount }}</p>
@@ -77,26 +77,25 @@
           </div>
 
           <div v-if="authStore.role === 'pd'"
-            class="bg-gradient-to-br from-violet-50 to-purple-50 rounded-lg shadow-md p-6 border-l-4 border-violet-600"
-            @click="openAmountUsedModal">
-            <div class="flex justify-between items-start gap-4">
-              <div class="flex-1 min-w-0">
-                <h3 class="text-xs font-semibold text-violet-700 uppercase tracking-wide whitespace-nowrap">Amount Used
+            class="bg-purple-100   rounded-lg shadow-lg p-6 border-l-4 border-violet-700" @click="openAmountUsedModal">
+            <div class=" flex justify-between items-start gap-4">
+              <div class=" flex-1 min-w-0">
+                <h3 class="text-xs font-semibold text-violet-700 uppercase tracking-wide whitespace-nowrap">Used Amount
                 </h3>
                 <p :class="'font-bold text-gray-900 mt-2 whitespace-nowrap overflow-hidden text-ellipsis'">
                   Rs {{ amountUsed }}</p>
                 <p class="text-xs text-gray-500 mt-1">From collected amount</p>
               </div>
-              <button class="text-purple-600 hover:text-purple-800 text-xl flex-shrink-0 self-start"
+              <button class="text-purple-700 hover:text-purple-800 text-xl flex-shrink-0 self-start"
                 title="Edit Amount Used">✏️</button>
+
             </div>
           </div>
 
-          <div v-else
-            class="bg-gradient-to-br from-violet-50 to-purple-50 rounded-lg shadow-md p-6 border-l-4 border-violet-600">
+          <div v-else class="bg-purple-100 rounded-lg shadow-lg p-6 border-l-4 border-violet-700">
             <div class="flex justify-between items-start gap-4">
               <div class="flex-1 min-w-0">
-                <h3 class="text-xs font-semibold text-violet-700 uppercase tracking-wide whitespace-nowrap">Amount Used
+                <h3 class="text-xs font-semibold text-violet-700 uppercase tracking-wide whitespace-nowrap">Used Amount
                 </h3>
                 <p :class="'font-bold text-gray-900 mt-2 whitespace-nowrap overflow-hidden text-ellipsis'">
                   Rs {{ amountUsed }}</p>
@@ -112,20 +111,19 @@
           <h1 class="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider">All-Time Totals</h1>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div
-              class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg shadow-md p-6 border-l-4 border-emerald-600">
+              class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg shadow-lg p-6 border-l-4 border-emerald-700">
               <h3 class="text-xs font-semibold text-emerald-700 uppercase tracking-wide whitespace-nowrap">All-Time
-                Collected</h3>
+                Collected Amount</h3>
               <p :class="'font-bold text-gray-900 mt-2 whitespace-nowrap overflow-hidden text-ellipsis'">
                 Rs {{ allTimeCollectedAmount }}</p>
               <p class="text-xs text-gray-500 mt-1">Across all cycles</p>
             </div>
 
-            <div
-              class="bg-gradient-to-br from-violet-50 to-purple-50 rounded-lg shadow-md p-6 border-l-4 border-violet-600">
+            <div class="bg-purple-100 rounded-lg shadow-lg p-6 border-l-4 border-violet-700">
               <div class="flex items-start gap-2">
                 <div class="flex-1 min-w-0">
                   <h3 class="text-xs font-semibold text-violet-700 uppercase tracking-wide whitespace-nowrap">All-Time
-                    Amount Used</h3>
+                    Used Amount</h3>
                   <p :class="'font-bold text-gray-900 mt-2 whitespace-nowrap overflow-hidden text-ellipsis'">
                     Rs {{ allTimeAmountUsed }}</p>
                   <p class="text-xs text-gray-500 mt-1">Across all cycles</p>
@@ -137,11 +135,11 @@
 
         </div>
 
-        <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="bg-white rounded-lg shadow-lg p-6">
           <div class="mb-6">
             <h3 class="text-lg font-bold text-gray-900">Category Analytics</h3>
-            <p class="text-sm text-gray-600 mt-1">
-              {{ authStore.role === 'pd' ? 'Fine distribution by category' : 'Your fines by category' }}
+            <p class="text-sm text-gray-700 mt-1">
+              {{ 'Fine distribution by category' }}
             </p>
           </div>
 
@@ -168,10 +166,10 @@
           </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="bg-white rounded-lg shadow-lg p-6">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-bold text-gray-900">
-              {{ authStore.role === 'pd' ? 'Employee Summary' : 'Fines Summary' }}
+              {{ 'Fines Summary' }}
             </h3>
             <input v-model="searchQuery" type="text" placeholder="Search by name..."
               class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
@@ -198,9 +196,9 @@
                   class="hover:bg-gray-50 transition">
                   <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ employee.name }}</td>
                   <td class="px-6 py-4 text-sm text-right text-gray-900">{{ employee.totalCount }}</td>
-                  <td class="px-6 py-4 text-sm text-right font-semibold text-green-600">Rs {{
+                  <td class="px-6 py-4 text-sm text-right font-semibold text-green-700">Rs {{
                     formatAmount(employee.collectedAmount) }}</td>
-                  <td class="px-6 py-4 text-sm text-right font-semibold text-red-600">Rs {{
+                  <td class="px-6 py-4 text-sm text-right font-semibold text-red-700">Rs {{
                     formatAmount(employee.pendingAmount) }}</td>
                 </tr>
               </tbody>
@@ -215,7 +213,7 @@
       @click="closeAmountUsedModal">
       <div class="bg-white rounded-lg shadow-lg max-w-sm w-full p-6" @click.stop>
         <h3 class="text-lg font-bold text-gray-900 mb-4">Update Amount Used</h3>
-        <p class="text-sm text-gray-600 mb-4">
+        <p class="text-sm text-gray-700 mb-4">
           Enter the amount that has been used from the collected fines.
         </p>
 
@@ -232,7 +230,7 @@
             Cancel
           </button>
           <button @click="updateAmountUsed" :disabled="savingAmountUsed"
-            class="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+            class="flex-1 px-4 py-2 bg-purple-700 text-white rounded-lg font-semibold hover:bg-purple-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
             {{ savingAmountUsed ? 'Saving...' : 'Save' }}
           </button>
         </div>
@@ -244,7 +242,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import axios from 'axios';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '../store/auth';
@@ -278,7 +276,7 @@ const displayedFines = computed(() => {
 });
 
 const categoryStats = computed(() => {
-  const finesToAnalyze = authStore.role === 'pd' ? finesStore.fines : displayedFines.value;
+  const finesToAnalyze = finesStore.fines;
 
   const stats = finesToAnalyze.reduce((acc, fine) => {
     const existing = acc.find(s => s.category === fine.category);
@@ -304,7 +302,7 @@ const categoryStats = computed(() => {
 });
 
 const employeeAnalytics = computed(() => {
-  const finesToAnalyze = authStore.role === 'pd' ? finesStore.fines : displayedFines.value;
+  const finesToAnalyze = finesStore.fines ;
   const employeeMap = new Map();
 
   finesToAnalyze.forEach(fine => {
@@ -353,7 +351,7 @@ const dashboardCollectedAmount = computed(() => {
 });
 
 const dashboardPendingAmount = computed(() => {
-  const source = authStore.role === 'pd' ? finesStore.fines : displayedFines.value;
+  const source = finesStore.fines ;
   return formatAmount(source
     .filter(fine => fine.status !== 'paid')
     .reduce((sum, fine) => sum + fine.value, 0));
@@ -361,10 +359,28 @@ const dashboardPendingAmount = computed(() => {
 
 
 const activeEmployeesList = ref([]);
+let activeEmployeeRefreshTimer = null;
 
 const dashboardActiveEmployeeCount = computed(() => {
   return activeEmployeesList.value.length;
 });
+
+const startActiveEmployeePolling = () => {
+  if (activeEmployeeRefreshTimer) return;
+
+  activeEmployeeRefreshTimer = setInterval(() => {
+    if (document.visibilityState === 'visible' && authStore.token) {
+      fetchActiveEmployees();
+    }
+  }, 5000);
+};
+
+const stopActiveEmployeePolling = () => {
+  if (activeEmployeeRefreshTimer) {
+    clearInterval(activeEmployeeRefreshTimer);
+    activeEmployeeRefreshTimer = null;
+  }
+};
 
 const newFinesDetected = ref([]);
 
@@ -374,6 +390,7 @@ const fetchActiveEmployees = async () => {
       `${API_BASE_URL}/api/users/active/list`,
       { headers: { Authorization: `Bearer ${authStore.token}` } }
     );
+
     activeEmployeesList.value = response.data;
   } catch (err) {
     console.error('Error fetching active employees:', err);
@@ -403,6 +420,8 @@ const checkForNewFines = () => {
 };
 
 onMounted(async () => {
+  startActiveEmployeePolling();
+
   if (finesStore.fines.length === 0) {
     await finesStore.fetchFines();
   }
@@ -415,6 +434,10 @@ onMounted(async () => {
   } else {
     checkForNewFines();
   }
+
+  onBeforeUnmount(() => {
+    stopActiveEmployeePolling();
+  });
 });
 
 watch(() => route.path, (newPath) => {

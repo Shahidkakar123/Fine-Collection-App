@@ -202,7 +202,7 @@ Notification toasts now appear:
 - [ ] Check email for reset link
 - [ ] Click reset link
 - [ ] Should redirect to reset password page
-- [ ] Enter new password (min 6 chars)
+- [ ] Enter new password (min 8 chars)
 - [ ] Confirm password matches
 - [ ] Submit and verify success message
 - [ ] Try invalid expired token (after >15 minutes)

@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-md mx-auto bg-gray-100 shadow-md rounded p-6 text-gray-900 mt-6">
+  <div class="max-w-md mx-auto bg-gray-50 shadow-lg rounded p-6 text-gray-900 mt-6">
     <h2 class="text-2xl font-bold mb-4">Login</h2>
     
     <!-- Error Alert -->
@@ -9,12 +9,12 @@
 
     <form @submit.prevent="login" class="space-y-4">
       <div>
-        <label class="block text-gray-800 font-medium mb-2">Username</label>
+        <label class="block text-gray-800 font-medium mb-2">Email</label>
         <input 
-          v-model="form.username" 
-          type="text" 
+          v-model="form.email" 
+          type="email" 
           class="w-full border border-gray-300 rounded-lg p-2 bg-white text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent transition duration-200"
-          placeholder="Enter your username"
+          placeholder="Enter your email"
           required 
         />
       </div>
@@ -45,10 +45,10 @@
 
     <div class="mt-6 p-4 bg-blue-50 rounded border border-blue-200">
       <p class="text-sm text-gray-700 mb-2">
-        <strong>Demo Accounts:</strong>
+        <strong>Demo Account:</strong>
       </p>
       <ul class="text-xs text-gray-700 space-y-1">
-        <li>• <span class="font-mono">PD / admin</span> (Project Director)</li>
+        <li>• <span class="font-mono">pd@finecollection.local / admin</span> (Project Director)</li>
         <li>• Or register a new employee account</li>
       </ul>
     </div>
@@ -68,15 +68,15 @@ import axios from 'axios';
 
 const authStore = useAuthStore();
 const router = useRouter();
-const form = ref({ username: '', password: '' });
+const form = ref({ email: '', password: '' });
 const error = ref('');
 const loading = ref(false);
 
 const login = async () => {
   error.value = '';
   
-  if (!form.value.username || !form.value.password) {
-    error.value = 'Username and password are required';
+  if (!form.value.email || !form.value.password) {
+    error.value = 'Email and password are required';
     return;
   }
 
@@ -90,7 +90,7 @@ const login = async () => {
     if (err.response?.data?.message) {
       error.value = err.response.data.message;
     } else if (err.response?.status === 401) {
-      error.value = 'Invalid username or password';
+      error.value = 'Invalid email or password';
     } else if (err.response?.status === 400) {
       error.value = 'Invalid input';
     } else if (err.message === 'Network Error') {

@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-md mx-auto bg-gray-100 shadow-md rounded p-6 mt-6">
+  <div class="max-w-md mx-auto bg-gray-50 shadow-lg rounded p-6 mt-6">
     <h2 class="text-2xl font-bold mb-4 text-gray-900">Register</h2>
 
     <!-- Error Alert -->
@@ -18,7 +18,7 @@
         <input v-model="form.username" type="text" placeholder="Min 3 characters"
           class="w-full border border-gray-300 rounded-lg p-2 bg-white text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent transition duration-200"
           required />
-        <p class="text-xs text-gray-600 mt-1">Must be at least 3 characters</p>
+        <!-- <p class="text-xs text-gray-600 mt-1">At least 3 characters</p> -->
       </div>
 
       <div>
@@ -31,10 +31,29 @@
 
       <div>
         <label class="block text-gray-800 font-medium mb-2">Password</label>
-        <input v-model="form.password" type="password" placeholder="Min 6 characters"
-          class="w-full border border-gray-300 rounded-lg p-2 bg-white text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent transition duration-200"
-          required />
-        <p class="text-xs text-gray-600 mt-1">Must be at least 8 characters</p>
+        <div class="relative">
+          <input v-model="form.password" :type="showPassword ? 'text' : 'password'" placeholder="Min 8 characters"
+            class="w-full border border-gray-300 rounded-lg p-2 pr-11 bg-white text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent transition duration-200"
+            required />
+          <button
+            type="button"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+            aria-label="Toggle password visibility"
+            @click="togglePasswordVisibility"
+          >
+            <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.036 12.322a1.012 1.012 0 010-.628C3.423 7.53 7.36 4.5 12 4.5c4.64 0 8.577 3.03 9.964 7.194a1.012 1.012 0 010 .628C20.577 16.47 16.64 19.5 12 19.5c-4.64 0-8.577-3.03-9.964-7.178z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3l18 18"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.56 10.56A2 2 0 0113.44 13.44"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.88 5.08A10.94 10.94 0 0112 5c5.38 0 10 7 10 7a15.76 15.76 0 01-4.59 5.52"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6.61 6.61A15.6 15.6 0 002 12s3.5 7 10 7a9.86 9.86 0 005.39-1.61"/>
+            </svg>
+          </button>
+        </div>
+        <p class="text-xs text-gray-600 mt-1">At least one letter, one number, and one special character</p>
       </div>
 
       <div>
@@ -50,11 +69,11 @@
       </button>
     </form>
 
-    <div class="mt-6 p-4 bg-blue-50 rounded border border-blue-200">
+    <!-- <div class="mt-6 p-4 bg-blue-50 rounded border border-blue-200">
       <p class="text-sm text-gray-700">
         <strong>Note:</strong> All users register as employees. Project Directors can promote users.
       </p>
-    </div>
+    </div> -->
 
     <p class="mt-4 text-center text-gray-600">
       Already have an account?
@@ -70,6 +89,7 @@ import axios from 'axios';
 
 const router = useRouter();
 const form = ref({ username: '', email: '', password: '', phone: '' });
+const showPassword = ref(false);
 // At least 8 characters, with at least one letter, one number, and one special character
 const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d\s])[\S]{8,}$/;
 const error = ref('');
@@ -77,6 +97,9 @@ const success = ref('');
 const loading = ref(false);
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
+const togglePasswordVisibility = () => {
+  showPassword.value = !showPassword.value;
+};
 
 const register = async () => {
   // Reset messages
@@ -94,8 +117,7 @@ const register = async () => {
     return;
   }
 
-  // Stricter email validation for common providers
-  const emailRegex = /^[A-Za-z0-9._%+-]+@(gmail|yahoo|outlook|hotmail)\.(com|net|org)$/i;
+  const emailRegex = /^(?!.*\.\.)(?!.*\.$)(?!.*@.*@)[A-Za-z0-9](?:[A-Za-z0-9._%+-]{0,62}[A-Za-z0-9])?@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$/;
   if (!emailRegex.test(form.value.email)) {
     error.value = 'Please enter a valid email address.';
     return;
@@ -108,7 +130,6 @@ const register = async () => {
   }
 
   loading.value = true;
-  debugger
 
   try {
     const response = await axios.post(`${API_BASE_URL}/api/users/register`, form.value);
@@ -117,19 +138,20 @@ const register = async () => {
 
     // Clear form
     form.value = { username: '', email: '', password: '', phone: '' };
-
     // Redirect after 2 seconds
-    setTimeout(() => {
-      router.push('/login');
-    }, 3000);
-  } catch (err) {
-    debugger
+    //   setTimeout(() => {
+    //     router.push('/login');
+    //   }, 3000);
+  }
+  catch (err) {
 
-    console.log('Registration error:', err);
     // Show detailed error from backend or generic error
-    if (err?.response?.data?.message.includes('email_1 dup key')) {
+    if (err?.response?.data?.message.includes('email_1 dup')) {
       error.value = 'Email already exists. Please use a different email.';
-    } else
+    } else if (err?.response?.data?.message.includes('username_1 dup')) {
+      error.value = 'Username already exists. Please use a different username.';
+    }
+    else
       if (err.response?.data?.message) {
         error.value = err.response.data.message;
       } else if (err.response?.status === 400) {

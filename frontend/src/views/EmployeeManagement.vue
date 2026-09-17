@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-100 py-8">
+  <div class="min-h-screen bg-gray-50 py-8">
     <div class="container mx-auto px-4 max-w-6xl">
       <!-- Header -->
       <div class="mb-8">
@@ -212,7 +212,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { useAuthStore } from '../store/auth';
 import { useFinesStore } from '../store/fines';
 import { useNotificationStore } from '../store/notifications';
@@ -233,8 +233,11 @@ const reactivating = ref(null);
 const permanently_deleting = ref(null);
 const promoting = ref(null);
 const demoting = ref(null);
+let lastRefreshAt = 0;
+let refreshTimer = null;
 
 const PRINCIPAL_PD_USERNAME = 'PD';
+let userListRefreshTimer = null;
 
 const actingPD = computed(() => employees.value.find(employee =>
   employee.role === 'pd' && employee.username !== PRINCIPAL_PD_USERNAME
@@ -255,13 +258,55 @@ const statusClass = (employee) => {
   return 'bg-green-100 text-green-800';
 };
 
+const refreshEmployeeList = async () => {
+  const now = Date.now();
+  if (authStore.role !== 'pd' || !authStore.token) return;
+  if (now - lastRefreshAt < 3000) return;
+  lastRefreshAt = now;
+  await fetchEmployees(false);
+};
+
+const startBackgroundRefresh = () => {
+  if (refreshTimer) return;
+  refreshTimer = setInterval(() => {
+    if (document.visibilityState === 'visible') {
+      refreshEmployeeList();
+    }
+  }, 15000);
+};
+
+const stopBackgroundRefresh = () => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+};
+
+const startUserListPolling = () => {
+  if (userListRefreshTimer) return;
+
+  userListRefreshTimer = setInterval(() => {
+    if (document.visibilityState === 'visible' && authStore.role === 'pd' && authStore.token) {
+      fetchEmployees(false);
+    }
+  }, 5000);
+};
+
+const stopUserListPolling = () => {
+  if (userListRefreshTimer) {
+    clearInterval(userListRefreshTimer);
+    userListRefreshTimer = null;
+  }
+};
+
 // Fetch all employees
-const fetchEmployees = async () => {
-  loading.value = true;
+const fetchEmployees = async (showLoader = true) => {
+  if (showLoader) loading.value = true;
   try {
     const response = await axios.get(`${API_BASE_URL}/api/users`, {
       headers: { Authorization: `Bearer ${authStore.token}` }
     });
+    console.log('Fetched employees:', response.data);
     employees.value = response.data;
   } catch (error) {
     const errorMsg = error.response?.status === 403
@@ -273,9 +318,9 @@ const fetchEmployees = async () => {
       status: error.response?.status,
       message: errorMsg
     });
-    notificationStore.error(errorMsg, 3000);
+    if (showLoader) notificationStore.error(errorMsg, 3000);
   } finally {
-    loading.value = false;
+    if (showLoader) loading.value = false;
   }
 };
 
@@ -495,9 +540,14 @@ onMounted(async () => {
       console.warn('Token refresh failed:', refreshErr);
     }
   }
-  
+
+  startUserListPolling();
   fetchEmployees();
   finesStore.fetchFines();
+
+  onBeforeUnmount(() => {
+    stopUserListPolling();
+  });
 });
 </script>
 

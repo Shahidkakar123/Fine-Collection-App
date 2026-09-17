@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-md mx-auto bg-gray-100 shadow-md rounded p-6 mt-12">
+  <div class="max-w-md mx-auto bg-gray-50 shadow-md rounded p-6 mt-12">
     <h2 class="text-2xl font-bold mb-4 text-gray-900">Forgot Password</h2>
     
     <!-- Success Message -->
